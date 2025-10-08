@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS user_balances (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  crypto VARCHAR(10) NOT NULL,
+  balance DECIMAL(20, 8) DEFAULT 0.00000000,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, crypto)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  from_user_id INTEGER REFERENCES users(id),
+  to_user_id INTEGER REFERENCES users(id),
+  crypto VARCHAR(10) NOT NULL,
+  amount DECIMAL(20, 8) NOT NULL,
+  fee DECIMAL(20, 8) DEFAULT 0.00000000,
+  type VARCHAR(50) NOT NULL,
+  status VARCHAR(20) DEFAULT 'completed',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO user_balances (user_id, crypto, balance) VALUES
+(1, 'BRT', 10000.00000000),
+(2, 'BRT', 1000.00000000),
+(3, 'BRT', 0.00000000)
+ON CONFLICT DO NOTHING;
