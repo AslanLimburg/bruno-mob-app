@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
+const referralRoutes = require('./routes/referralRoutes');
+const lotteryRoutes = require('./routes/lotteryRoutes');  // ← ДОБАВЛЕНО
+const clubAvalancheRoutes = require('./routes/clubAvalancheRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +26,9 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/referral', referralRoutes);
+app.use('/api/lottery', lotteryRoutes);  // ← ДОБАВЛЕНО
+app.use('/api/club-avalanche', clubAvalancheRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });

@@ -5,6 +5,8 @@ import Login from "./components/auth/Login";
 import SignUp from "./components/auth/SignUp";
 import EmailVerification from "./components/auth/EmailVerification";
 import Dashboard from "./components/dashboard/Dashboard";
+import Referral from "./components/referral/Referral";
+import Lottery from "./components/lottery/Lottery";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -66,7 +68,7 @@ function AppContent() {
           }
         />
         <Route
-          path="/verify"
+          path="/verify-email"
           element={
             <PublicRoute>
               <EmailVerification addNotification={addNotification} />
@@ -78,6 +80,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Dashboard addNotification={addNotification} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/referral"
+          element={
+            <ProtectedRoute>
+              <Referral addNotification={addNotification} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lottery"
+          element={
+            <ProtectedRoute>
+              <Lottery addNotification={addNotification} />
             </ProtectedRoute>
           }
         />

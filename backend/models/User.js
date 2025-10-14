@@ -3,16 +3,16 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 class User {
-  static async create({ email, password, referralCode = null }) {
+  static async create({ email, password, name, referralCode = null }) {
     const passwordHash = await bcrypt.hash(password, 10);
     const userReferralCode = crypto.randomBytes(8).toString('hex');
 
     return transaction(async (client) => {
       const userResult = await client.query(
-        `INSERT INTO users (email, password_hash, referral_code, referred_by)
-         VALUES ($1, $2, $3, (SELECT id FROM users WHERE referral_code = $4))
-         RETURNING id, email, referral_code, created_at`,
-        [email, passwordHash, userReferralCode, referralCode]
+        `INSERT INTO users (email, password_hash, name, referral_code, referred_by)
+         VALUES ($1, $2, $3, $4, (SELECT id FROM users WHERE referral_code = $5))
+         RETURNING id, email, name, referral_code, created_at`,
+        [email, passwordHash, name, userReferralCode, referralCode]
       );
 
       const user = userResult.rows[0];
@@ -31,8 +31,10 @@ class User {
         [user.id]
       );
 
-      await client.query(`UPDATE user_balances SET balance = balance - 0.02 WHERE user_id = 2 AND crypto = 'BRT'`);
-      await client.query(`UPDATE user_balances SET balance = balance + 0.02 WHERE user_id = $1 AND crypto = 'BRT'`, [user.id]);
+      await client.query(`UPDATE user_balances SET balance = balance - 0.02 WHERE user_id = 2 AND crypto = 
+'BRT'`);
+      await client.query(`UPDATE user_balances SET balance = balance + 0.02 WHERE user_id = $1 AND crypto = 
+'BRT'`, [user.id]);
 
       if (referralCode) {
         const referrerResult = await client.query(
@@ -53,9 +55,10 @@ class User {
                VALUES (1, $1, 'BRT', $2, 'referral_payout', 'completed')`,
               [referrer.id, commission]
             );
-            await client.query(`UPDATE user_balances SET balance = balance - $1 WHERE user_id = 1 AND crypto = 'BRT'`, [commission]);
-            await client.query(`UPDATE user_balances SET balance = balance + $1 WHERE user_id = $2 AND crypto = 'BRT'`, [commission, 
-referrer.id]);
+            await client.query(`UPDATE user_balances SET balance = balance - $1 WHERE user_id = 1 AND crypto = 
+'BRT'`, [commission]);
+            await client.query(`UPDATE user_balances SET balance = balance + $1 WHERE user_id = $2 AND crypto = 
+'BRT'`, [commission, referrer.id]);
           }
         }
       }
@@ -65,7 +68,14 @@ referrer.id]);
   }
 
   static async findByEmail(email) {
+    console.log('🔍 Searching for email:', email, 'Type:', typeof email);
     const result = await query(`SELECT * FROM users WHERE email = $1`, [email]);
+    console.log('🔍 Query result rows:', result.rows.length);
+    if (result.rows.length > 0) {
+      console.log('🔍 User found:', result.rows[0].email);
+    } else {
+      console.log('🔍 No user found with email:', email);
+    }
     return result.rows[0];
   }
 

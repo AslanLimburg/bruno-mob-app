@@ -11,8 +11,22 @@ const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
+console.log('🔍 DATABASE CONFIG:', {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER
+});
+
 pool.on('connect', () => {
-  console.log('✅ Connected to PostgreSQL database');
+  console.log('✅ Connected to PostgreSQL database:', process.env.DB_NAME);
+});
+
+// Тестовый запрос
+pool.query('SELECT current_database()').then(res => {
+  console.log('🔍 ACTUAL DATABASE CONNECTED:', res.rows[0].current_database);
+}).catch(err => {
+  console.error('❌ Test query failed:', err);
 });
 
 pool.on('error', (err) => {

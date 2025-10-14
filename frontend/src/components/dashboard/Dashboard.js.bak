@@ -5,7 +5,7 @@ import SendModal from "./SendModal";
 import ReceiveModal from "./ReceiveModal";
 import SwapModal from "./SwapModal";
 import Lottery from "../lottery/Lottery";
-import ClubAvalanche from "../club-avalanche/ClubAvalanche";
+import Referral from "../referral/Referral";
 
 // Mock Data
 const mockTransactions = [
@@ -132,8 +132,8 @@ const Dashboard = ({addNotification}) => {
           <button className={activeTab==="coupons"?"tab active":"tab"} onClick={()=>setActiveTab("coupons")}>Coupons</button>
           <button className={activeTab==="lottery"?"tab active":"tab"} onClick={()=>setActiveTab("lottery")}>Lottery</button>
           <button className={activeTab==="transactions"?"tab active":"tab"} onClick={()=>setActiveTab("transactions")}>Transactions</button>
-          <button className={activeTab==="club"?"tab active":"tab"} onClick={()=>setActiveTab("club")}>Club Avalanche</button>
-	</div>
+          <button className={activeTab==="referrals"?"tab active":"tab"} onClick={()=>setActiveTab("referrals")}>Referrals</button>
+        </div>
         
         {/* Overview Tab */}
         {activeTab==="overview" && (
@@ -364,9 +364,9 @@ const Dashboard = ({addNotification}) => {
           </div>
         )}
         
-        {activeTab==="club" && <ClubAvalanche />}
+        {activeTab==="referrals" && <Referral />}
       <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
-      </div>  
+      </div>
       
       {/* Messenger Button */}
       <button onClick={()=>setIsMessengerOpen(!isMessengerOpen)} className="messenger-button">

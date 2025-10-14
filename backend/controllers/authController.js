@@ -16,10 +16,10 @@ const generateVerificationCode = () => {
 class AuthController {
   static async register(req, res) {
     try {
-      const { email, password, referralCode } = req.body;
+      const { email, password, name, referralCode } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'Email and password required' });
+      if (!email || !password || !name) {
+        return res.status(400).json({ success: false, message: 'Email, password and name required' });
       }
 
       if (password.length < 8) {
@@ -31,7 +31,7 @@ class AuthController {
         return res.status(400).json({ success: false, message: 'Email already registered' });
       }
 
-      const user = await User.create({ email, password, referralCode });
+      const user = await User.create({ email, password, name, referralCode });
 
       const code = generateVerificationCode();
       const expiresAt = new Date(Date.now() + EXPIRY.EMAIL_VERIFICATION);
@@ -46,7 +46,7 @@ class AuthController {
       res.status(201).json({
         success: true,
         message: 'Registration successful',
-        data: { userId: user.id, email: user.email, referralCode: user.referral_code }
+        data: { userId: user.id, email: user.email, name: user.name, referralCode: user.referral_code }
       });
     } catch (error) {
       console.error('Register error:', error);
@@ -134,13 +134,14 @@ class AuthController {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
-      if (!user.email_verified) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Please verify your email',
-          requiresVerification: true
-        });
-      }
+      // ВРЕМЕННО ОТКЛЮЧЕНО ДЛЯ ТЕСТИРОВАНИЯ
+      //if (!user.email_verified) {
+      //  return res.status(403).json({ 
+      //    success: false, 
+      //    message: 'Please verify your email',
+      //    requiresVerification: true
+      //  });
+     // }
 
       await User.updateLastLogin(user.id);
 

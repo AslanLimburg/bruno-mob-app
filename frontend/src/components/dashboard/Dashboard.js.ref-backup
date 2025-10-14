@@ -5,7 +5,6 @@ import SendModal from "./SendModal";
 import ReceiveModal from "./ReceiveModal";
 import SwapModal from "./SwapModal";
 import Lottery from "../lottery/Lottery";
-import ClubAvalanche from "../club-avalanche/ClubAvalanche";
 
 // Mock Data
 const mockTransactions = [
@@ -132,8 +131,8 @@ const Dashboard = ({addNotification}) => {
           <button className={activeTab==="coupons"?"tab active":"tab"} onClick={()=>setActiveTab("coupons")}>Coupons</button>
           <button className={activeTab==="lottery"?"tab active":"tab"} onClick={()=>setActiveTab("lottery")}>Lottery</button>
           <button className={activeTab==="transactions"?"tab active":"tab"} onClick={()=>setActiveTab("transactions")}>Transactions</button>
-          <button className={activeTab==="club"?"tab active":"tab"} onClick={()=>setActiveTab("club")}>Club Avalanche</button>
-	</div>
+          <button className={activeTab==="referrals"?"tab active":"tab"} onClick={()=>setActiveTab("referrals")}>Referrals</button>
+        </div>
         
         {/* Overview Tab */}
         {activeTab==="overview" && (
@@ -364,9 +363,95 @@ const Dashboard = ({addNotification}) => {
           </div>
         )}
         
-        {activeTab==="club" && <ClubAvalanche />}
+        {/* Referrals Tab */}
+        {activeTab==="referrals" && (
+          <div className="referrals-section">
+            <h3>Referral Program</h3>
+            
+            <div className="referral-card">
+              <h4>Your Referral Code</h4>
+              <div className="referral-code-section">
+                <div className="referral-label">Referral Code</div>
+                <div className="referral-code-display">
+                  <code>{referralCode}</code>
+                  <button 
+                    onClick={()=>{navigator.clipboard.writeText(referralCode);addNotification("success","Code copied!")}} 
+                    className="btn-copy-small"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+              
+              <div className="referral-link-section">
+                <div className="referral-label">Referral Link</div>
+                <div className="referral-code-display">
+                  <code className="referral-link">https://brunotoken.com/ref/{referralCode}</code>
+                  <button 
+                    onClick={()=>{navigator.clipboard.writeText(`https://brunotoken.com/ref/${referralCode}`);addNotification("success","Link copied!")}} 
+                    className="btn-copy-small"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+              
+              <p className="referral-info">
+                Earn 10% commission on every transaction your referrals make! Share your code with friends.
+              </p>
+            </div>
+            
+            <div className="referral-stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon">👥</div>
+                <div className="stat-value">{mockReferrals.length}</div>
+                <div className="stat-label">Total Referrals</div>
+              </div>
+              
+              <div className="stat-card">
+                <div className="stat-icon">💰</div>
+                <div className="stat-value">430</div>
+                <div className="stat-label">Total Earned (BRT)</div>
+              </div>
+              
+              <div className="stat-card">
+                <div className="stat-icon">⚡</div>
+                <div className="stat-value">{mockReferrals.filter(r=>r.status==="active").length}</div>
+                <div className="stat-label">Active Referrals</div>
+              </div>
+            </div>
+            
+            <div className="referrals-list-section">
+              <h4>Your Referrals</h4>
+              <div className="transactions-list">
+                {mockReferrals.map(ref => (
+                  <div key={ref.id} className="transaction-item">
+                    <div className="tx-icon" style={{background: "#4CAF50"}}>👤</div>
+                    <div className="tx-details">
+                      <div className="tx-main">
+                        <span className="tx-type">{ref.name}</span>
+                      </div>
+                      <div className="tx-meta">
+                        <span className="tx-date">Joined: {ref.joined}</span>
+                        <span className="tx-address">{ref.email}</span>
+                      </div>
+                    </div>
+                    <div className="tx-amount-status">
+                      <span className="tx-amount">+{ref.earnings}</span>
+                      <span className="tx-status" style={{color: "#4CAF50"}}>{ref.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Modals */}
+      <SendModal isOpen={isSendModalOpen} onClose={()=>setIsSendModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
       <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
-      </div>  
+      <SwapModal isOpen={isSwapModalOpen} onClose={()=>setIsSwapModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
       
       {/* Messenger Button */}
       <button onClick={()=>setIsMessengerOpen(!isMessengerOpen)} className="messenger-button">
