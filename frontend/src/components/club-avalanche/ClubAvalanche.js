@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import './ClubAvalanche.css';
 import { QRCodeCanvas } from 'qrcode.react';
+import ReferralTree from './ReferralTree';
+import Calculator from './Calculator';
 
 const PROGRAMS = {
   'GS-I': { name: 'Golden Stairs I', price: 5, levels: 4, perLevel: 0.88 },
@@ -10,6 +12,9 @@ const PROGRAMS = {
   'GS-IV': { name: 'Golden Stairs IV', price: 1000, levels: 8, perLevel: 62.48 }
 };
 
+// Get BASE_URL from environment or default to localhost
+const BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:3000';
+
 const ClubAvalanche = () => {
   const { user } = useAuth();
   const [myPrograms, setMyPrograms] = useState([]);
@@ -17,7 +22,8 @@ const ClubAvalanche = () => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [referralCode, setReferralCode] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [showTree, setShowTree] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,6 +102,67 @@ const ClubAvalanche = () => {
     alert(`${type} copied to clipboard!`);
   };
 
+  const shareWhatsApp = () => {
+    if (!ownedProgram) return;
+    
+    const code = ownedProgram.referral_code;
+    const program = selectedProgram;
+    const referralUrl = `${BASE_URL}/ref/${code}?program=${program}`;
+    const text = `🎯 Join Bruno Kapital Club Avalanche!\n\n` +
+                 `Use my referral code: ${code}\n` +
+                 `Program: ${program}\n\n` +
+                 `Link: ${referralUrl}`;
+    
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  const shareTelegram = () => {
+    if (!ownedProgram) return;
+    
+    const code = ownedProgram.referral_code;
+    const program = selectedProgram;
+    const referralUrl = `${BASE_URL}/ref/${code}?program=${program}`;
+    const text = `🎯 Join Bruno Kapital Club Avalanche!\n\n` +
+                 `Use my referral code: ${code}\n` +
+                 `Program: ${program}`;
+    
+    const url = `https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  const copyQR = async () => {
+    try {
+      const canvas = document.querySelector('.qr-container canvas');
+      if (!canvas) {
+        alert('QR code not found');
+        return;
+      }
+      
+      canvas.toBlob(async (blob) => {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              'image/png': blob
+            })
+          ]);
+          alert('QR code copied! Now you can paste it in WhatsApp/Telegram/BrunoChat (Ctrl+V or Cmd+V)');
+        } catch (err) {
+          console.error('Clipboard API failed:', err);
+          const url = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `${ownedProgram.referral_code}_QR.png`;
+          link.href = url;
+          link.click();
+          alert('Your browser doesn\'t support copying images. QR code downloaded instead!');
+        }
+      }, 'image/png');
+    } catch (error) {
+      console.error('Copy QR error:', error);
+      alert('Failed to copy QR code');
+    }
+  };
+
   const ownedProgram = myPrograms.find(p => p.program === selectedProgram);
   const programConfig = PROGRAMS[selectedProgram];
 
@@ -122,10 +189,16 @@ const ClubAvalanche = () => {
           <div className="stat-label">Total Earned</div>
         </div>
 
-        <div className="club-stat-card" onClick={() => setActiveTab('tree')}>
+        <div className="club-stat-card" onClick={() => setShowTree(true)}>
           <div className="stat-icon">🌳</div>
           <div className="stat-value">View Tree</div>
           <div className="stat-label">Referral Tree</div>
+        </div>
+
+        <div className="club-stat-card" onClick={() => setShowCalculator(true)}>
+          <div className="stat-icon">🧮</div>
+          <div className="stat-value">Calculator</div>
+          <div className="stat-label">Earnings Projector</div>
         </div>
       </div>
 
@@ -187,33 +260,36 @@ const ClubAvalanche = () => {
                 <div className="modal-section">
                   <h3>Share Via</h3>
                   <div className="share-buttons">
-                    <button onClick={() => alert('WhatsApp sharing - coming soon')}>
-                      WhatsApp
+                    <button onClick={shareWhatsApp}>
+                      📱 WhatsApp
                     </button>
-                    <button onClick={() => alert('Telegram sharing - coming soon')}>
-                      Telegram
+                    <button onClick={shareTelegram}>
+                      💬 Telegram
                     </button>
                     <button onClick={() => alert('Bruno Messenger - coming soon')}>
-                      Bruno Messenger
+                      ✉️ Bruno Messenger
                     </button>
                   </div>
                 </div>
 
-		<div className="modal-section">
- 		 <h3>QR Code</h3>
- 		 <div className="qr-container">
-    		<QRCodeCanvas 
-     		 value={`https://brunotoken.com/ref/${ownedProgram.referral_code}?program=${selectedProgram}`}
-    		  size={200}
-    		  level="H"
-  		  />
- 		 </div>
- 		 <button onClick={() => alert('QR download - coming soon')} className="download-qr-btn">
-  		  Download QR
-		  </button>
-		</div> 
-	             </>
-        	    ) : (
+                <div className="modal-section">
+                  <h3>QR Code</h3>
+                  <div className="qr-container">
+                    <QRCodeCanvas 
+                      value={`${BASE_URL}/ref/${ownedProgram.referral_code}?program=${selectedProgram}`}
+                      size={200}
+                      level="H"
+                    />
+                  </div>
+                  <button onClick={copyQR} className="download-qr-btn">
+                    📋 Copy QR
+                  </button>
+                  <div className="referral-link-preview">
+                    <small>{BASE_URL}/ref/{ownedProgram.referral_code}?program={selectedProgram}</small>
+                  </div>
+                </div>
+              </>
+            ) : (
               <>
                 <div className="modal-section">
                   <h3>Enter Referral Code (Optional)</h3>
@@ -243,6 +319,12 @@ const ClubAvalanche = () => {
           </div>
         </div>
       )}
+
+      {/* Referral Tree Modal */}
+      {showTree && <ReferralTree onClose={() => setShowTree(false)} />}
+
+      {/* Calculator Modal */}
+      {showCalculator && <Calculator onClose={() => setShowCalculator(false)} />}
     </div>
   );
 };

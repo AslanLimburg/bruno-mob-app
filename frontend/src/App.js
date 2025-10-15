@@ -4,6 +4,9 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./components/auth/Login";
 import SignUp from "./components/auth/SignUp";
 import EmailVerification from "./components/auth/EmailVerification";
+import ReferralRegister from "./components/auth/ReferralRegister";
+import ForgotPassword from "./components/auth/ForgotPassword";
+import ResetPassword from "./components/auth/ResetPassword";
 import Dashboard from "./components/dashboard/Dashboard";
 import Referral from "./components/referral/Referral";
 import Lottery from "./components/lottery/Lottery";
@@ -72,6 +75,30 @@ function AppContent() {
           element={
             <PublicRoute>
               <EmailVerification addNotification={addNotification} />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPassword addNotification={addNotification} />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <PublicRoute>
+              <ResetPassword addNotification={addNotification} />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/ref/:code"
+          element={
+            <PublicRoute>
+              <ReferralRegister addNotification={addNotification} />
             </PublicRoute>
           }
         />

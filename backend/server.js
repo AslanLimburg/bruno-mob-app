@@ -7,8 +7,9 @@ const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
 const referralRoutes = require('./routes/referralRoutes');
-const lotteryRoutes = require('./routes/lotteryRoutes');  // ← ДОБАВЛЕНО
+const lotteryRoutes = require('./routes/lotteryRoutes');
 const clubAvalancheRoutes = require('./routes/clubAvalancheRoutes');
+const challengeRoutes = require('./routes/challengeRoutes'); // ← ДОБАВЛЕНО
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,8 +28,9 @@ app.get('/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/referral', referralRoutes);
-app.use('/api/lottery', lotteryRoutes);  // ← ДОБАВЛЕНО
+app.use('/api/lottery', lotteryRoutes);
 app.use('/api/club-avalanche', clubAvalancheRoutes);
+app.use('/api/challenge', challengeRoutes); // ← ДОБАВЛЕНО
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
@@ -45,6 +47,7 @@ app.listen(PORT, () => {
 ║        🚀 Bruno Token API Server          ║
 ║        Port: ${PORT}                           ║
 ║        URL: http://localhost:${PORT}           ║
+║        Environment: ${process.env.NODE_ENV || 'development'}               ║
 ╚════════════════════════════════════════════╝
   `);
 });
