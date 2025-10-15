@@ -6,6 +6,7 @@ import ReceiveModal from "./ReceiveModal";
 import SwapModal from "./SwapModal";
 import Lottery from "../lottery/Lottery";
 import ClubAvalanche from "../club-avalanche/ClubAvalanche";
+import Challenge from '../challenge/Challenge';
 
 // Mock Data
 const mockTransactions = [
@@ -133,7 +134,8 @@ const Dashboard = ({addNotification}) => {
           <button className={activeTab==="lottery"?"tab active":"tab"} onClick={()=>setActiveTab("lottery")}>Lottery</button>
           <button className={activeTab==="transactions"?"tab active":"tab"} onClick={()=>setActiveTab("transactions")}>Transactions</button>
           <button className={activeTab==="club"?"tab active":"tab"} onClick={()=>setActiveTab("club")}>Club Avalanche</button>
-	</div>
+          <button className={activeTab==="challenge"?"tab active":"tab"} onClick={()=>setActiveTab("challenge")}>🎯 Challenge</button>
+        </div>
         
         {/* Overview Tab */}
         {activeTab==="overview" && (
@@ -365,8 +367,12 @@ const Dashboard = ({addNotification}) => {
         )}
         
         {activeTab==="club" && <ClubAvalanche />}
+        {activeTab==="challenge" && <Challenge />}
+      </div>
+      
+      <SendModal isOpen={isSendModalOpen} onClose={()=>setIsSendModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
       <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
-      </div>  
+      <SwapModal isOpen={isSwapModalOpen} onClose={()=>setIsSwapModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
       
       {/* Messenger Button */}
       <button onClick={()=>setIsMessengerOpen(!isMessengerOpen)} className="messenger-button">
