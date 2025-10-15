@@ -165,6 +165,7 @@ class AuthController {
             clubMembership: user.club_membership,
             membershipTier: user.membership_tier,
             referralCode: user.referral_code,
+            role: user.role,
             balances: balancesObj
           }
         }
@@ -253,6 +254,7 @@ class AuthController {
           clubMembership: user.club_membership,
           membershipTier: user.membership_tier,
           referralCode: user.referral_code,
+          role: user.role,
           balances: balancesObj
         }
       });

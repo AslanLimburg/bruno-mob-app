@@ -1,47 +1,33 @@
-const pool = require('../config/database');
+/**
+ * Moderator Middleware
+ * Проверяет, что пользователь имеет роль 'moderator'
+ */
 
 const moderator = async (req, res, next) => {
   try {
-    // Получить user_id из auth middleware
-    const userId = req.userId;
-    
-    if (!userId) {
+    // Проверяем, что пользователь аутентифицирован (должно быть установлено auth middleware)
+    if (!req.user) {
       return res.status(401).json({ 
         success: false, 
         message: 'Authentication required' 
       });
     }
 
-    // Проверить роль пользователя
-    const result = await pool.query(
-      'SELECT role FROM users WHERE id = $1',
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
-      });
-    }
-
-    const userRole = result.rows[0].role;
-
-    // Проверить, является ли пользователь модератором
-    if (userRole !== 'moderator' && userRole !== 'admin') {
+    // Проверяем роль пользователя
+    if (req.user.role !== 'moderator' && req.user.role !== 'admin') {
       return res.status(403).json({ 
         success: false, 
-        message: 'Access denied. Moderator privileges required.' 
+        message: 'Access denied. Moderator role required.' 
       });
     }
 
-    // Пользователь - модератор, продолжаем
+    // Пользователь является модератором - разрешаем доступ
     next();
   } catch (error) {
     console.error('Moderator middleware error:', error);
     return res.status(500).json({ 
       success: false, 
-      message: 'Internal server error' 
+      message: 'Server error in authorization' 
     });
   }
 };

@@ -7,6 +7,7 @@ import SwapModal from "./SwapModal";
 import Lottery from "../lottery/Lottery";
 import ClubAvalanche from "../club-avalanche/ClubAvalanche";
 import Challenge from '../challenge/Challenge';
+import ModeratorDashboard from '../admin/ModeratorDashboard';
 
 // Mock Data
 const mockTransactions = [
@@ -135,6 +136,9 @@ const Dashboard = ({addNotification}) => {
           <button className={activeTab==="transactions"?"tab active":"tab"} onClick={()=>setActiveTab("transactions")}>Transactions</button>
           <button className={activeTab==="club"?"tab active":"tab"} onClick={()=>setActiveTab("club")}>Club Avalanche</button>
           <button className={activeTab==="challenge"?"tab active":"tab"} onClick={()=>setActiveTab("challenge")}>🎯 Challenge</button>
+          {user?.role === 'moderator' && (
+            <button className={activeTab==="moderator"?"tab active":"tab"} onClick={()=>setActiveTab("moderator")}>⚖️ Moderator</button>
+          )}
         </div>
         
         {/* Overview Tab */}
@@ -365,6 +369,7 @@ const Dashboard = ({addNotification}) => {
             </div>
           </div>
         )}
+        {activeTab==="moderator" && <ModeratorDashboard />}
         
         {activeTab==="club" && <ClubAvalanche />}
         {activeTab==="challenge" && <Challenge />}
