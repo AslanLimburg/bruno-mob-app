@@ -35,4 +35,10 @@ router.post('/:challengeId/resolve', authMiddleware, ChallengeController.resolve
 // Get my bets
 router.get('/my/bets', authMiddleware, ChallengeController.getMyBets);
 
+// Ручная обработка выплат
+router.post('/:challengeId/process-payouts', authMiddleware, ChallengeController.processPayouts);
+
+// Получить список выплат
+router.get('/:challengeId/payouts', ChallengeController.getChallengePayouts);
+
 module.exports = router;

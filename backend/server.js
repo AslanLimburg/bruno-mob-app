@@ -10,6 +10,7 @@ const referralRoutes = require('./routes/referralRoutes');
 const lotteryRoutes = require('./routes/lotteryRoutes');
 const clubAvalancheRoutes = require('./routes/clubAvalancheRoutes');
 const challengeRoutes = require('./routes/challengeRoutes'); // ← ДОБАВЛЕНО
+const payoutScheduler = require('./services/payoutScheduler');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,6 +32,8 @@ app.use('/api/referral', referralRoutes);
 app.use('/api/lottery', lotteryRoutes);
 app.use('/api/club-avalanche', clubAvalancheRoutes);
 app.use('/api/challenge', challengeRoutes); // ← ДОБАВЛЕНО
+// Запустить Payout Scheduler
+payoutScheduler.start();
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });

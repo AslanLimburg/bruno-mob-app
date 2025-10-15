@@ -3,7 +3,7 @@ const { pool } = require('../config/database');
 class ChallengeController {
   
   // CREATE CHALLENGE
-  async createChallenge(req, res) {
+  static async createChallenge(req, res) {
     const client = await pool.connect();
     try {
       const {
@@ -80,7 +80,7 @@ class ChallengeController {
   }
   
   // GET CHALLENGES
-  async getChallenges(req, res) {
+  static async getChallenges(req, res) {
     try {
       const { status, search, limit = 20, offset = 0 } = req.query;
       let query = `
@@ -114,7 +114,7 @@ class ChallengeController {
   }
   
   // GET CHALLENGE DETAILS
-  async getChallengeDetails(req, res) {
+  static async getChallengeDetails(req, res) {
     try {
       const { challengeId } = req.params;
       const challengeResult = await pool.query(
@@ -145,7 +145,7 @@ class ChallengeController {
   }
   
   // OPEN CHALLENGE
-  async openChallenge(req, res) {
+  static async openChallenge(req, res) {
     const client = await pool.connect();
     try {
       const { challengeId } = req.params;
@@ -178,7 +178,7 @@ class ChallengeController {
   }
   
   // CLOSE CHALLENGE
-  async closeChallenge(req, res) {
+  static async closeChallenge(req, res) {
     const client = await pool.connect();
     try {
       const { challengeId } = req.params;
@@ -211,7 +211,7 @@ class ChallengeController {
   }
   
   // PLACE BET
-  async placeBet(req, res) {
+  static async placeBet(req, res) {
     const client = await pool.connect();
     try {
       const { challengeId } = req.params;
@@ -293,7 +293,7 @@ class ChallengeController {
   }
   
   // RESOLVE CHALLENGE
-  async resolveChallenge(req, res) {
+  static async resolveChallenge(req, res) {
     const client = await pool.connect();
     try {
       const { challengeId } = req.params;
@@ -344,7 +344,7 @@ class ChallengeController {
   }
   
   // GET MY BETS
-  async getMyBets(req, res) {
+  static async getMyBets(req, res) {
     try {
       const userId = req.userId;
       const { status, limit = 20, offset = 0 } = req.query;
