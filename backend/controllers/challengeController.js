@@ -480,6 +480,305 @@ class ChallengeController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  // CREATE DISPUTE
+  async createDispute(req, res) {
+    const client = await pool.connect();
+    try {
+      const { challengeId } = req.params;
+      const { reason, evidence } = req.body;
+      const userId = req.userId;
+
+      if (!reason || reason.trim().length < 10) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Dispute reason must be at least 10 characters' 
+        });
+      }
+
+      await client.query('BEGIN');
+
+      const challengeResult = await client.query(
+        'SELECT id, status, winning_option_id FROM challenges WHERE id = $1',
+        [challengeId]
+      );
+
+      if (challengeResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, message: 'Challenge not found' });
+      }
+
+      const challenge = challengeResult.rows[0];
+
+      if (challenge.status !== 'resolved') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Can only dispute resolved challenges' 
+        });
+      }
+
+      const betResult = await client.query(
+        'SELECT id FROM bets WHERE challenge_id = $1 AND user_id = $2',
+        [challengeId, userId]
+      );
+
+      if (betResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Only participants can create disputes' 
+        });
+      }
+
+      const existingDispute = await client.query(
+        'SELECT id FROM disputes WHERE challenge_id = $1 AND status IN ($2, $3)',
+        [challengeId, 'open', 'under_review']
+      );
+
+      if (existingDispute.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'There is already an active dispute for this challenge' 
+        });
+      }
+
+      const disputeResult = await client.query(
+        "INSERT INTO disputes (challenge_id, user_id, reason, evidence, status, deadline) VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '72 hours') RETURNING id, created_at, deadline",
+        [challengeId, userId, reason, evidence || null, 'open']
+      );
+
+      await client.query(
+        'UPDATE challenges SET status = $1, updated_at = NOW() WHERE id = $2',
+        ['disputed', challengeId]
+      );
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: 'Dispute created successfully',
+        dispute: disputeResult.rows[0]
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error creating dispute:', error);
+      res.status(500).json({ success: false, error: error.message });
+    } finally {
+      client.release();
+    }
+  }
+
+  async getChallengeDisputes(req, res) {
+    try {
+      const { challengeId } = req.params;
+      const userId = req.userId;
+
+      const userResult = await pool.query(
+        'SELECT role FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      const userRole = userResult.rows[0].role;
+
+      const challengeResult = await pool.query(
+        'SELECT creator_id FROM challenges WHERE id = $1',
+        [challengeId]
+      );
+
+      if (challengeResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Challenge not found' });
+      }
+
+      const isCreator = challengeResult.rows[0].creator_id === userId;
+      const isModerator = ['moderator', 'admin'].includes(userRole);
+
+      if (!isCreator && !isModerator) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Only challenge creator or moderators can view disputes' 
+        });
+      }
+
+      const disputes = await pool.query(
+        'SELECT d.id, d.challenge_id, d.user_id, u.email as user_email, d.reason, d.evidence, d.status, d.deadline, d.created_at, dr.decision, dr.notes as resolution_notes, dr.created_at as resolution_created_at, m.email as moderator_email FROM disputes d JOIN users u ON d.user_id = u.id LEFT JOIN dispute_resolutions dr ON d.id = dr.dispute_id LEFT JOIN users m ON dr.moderator_id = m.id WHERE d.challenge_id = $1 ORDER BY d.created_at DESC',
+        [challengeId]
+      );
+
+      res.json({
+        success: true,
+        disputes: disputes.rows
+      });
+
+    } catch (error) {
+      console.error('Error getting challenge disputes:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  async resolveDispute(req, res) {
+    const client = await pool.connect();
+    try {
+      const { disputeId } = req.params;
+      const { decision, notes, newWinningOptionId } = req.body;
+      const moderatorId = req.userId;
+
+      const validDecisions = ['confirm_result', 'reverse_result', 'refund_all', 'partial_adjustment'];
+      if (!validDecisions.includes(decision)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid decision type' 
+        });
+      }
+
+      if (decision === 'reverse_result' && !newWinningOptionId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'New winning option ID required for reverse_result' 
+        });
+      }
+
+      await client.query('BEGIN');
+
+      const disputeResult = await client.query(
+        'SELECT id, challenge_id, status FROM disputes WHERE id = $1',
+        [disputeId]
+      );
+
+      if (disputeResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, message: 'Dispute not found' });
+      }
+
+      const dispute = disputeResult.rows[0];
+
+      if (dispute.status === 'resolved') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Dispute already resolved' 
+        });
+      }
+
+      const challengeId = dispute.challenge_id;
+
+      if (decision === 'confirm_result') {
+        await client.query(
+          'UPDATE challenges SET status = $1, updated_at = NOW() WHERE id = $2',
+          ['resolved', challengeId]
+        );
+
+      } else if (decision === 'reverse_result') {
+        const optionCheck = await client.query(
+          'SELECT id FROM challenge_options WHERE id = $1 AND challenge_id = $2',
+          [newWinningOptionId, challengeId]
+        );
+
+        if (optionCheck.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ 
+            success: false, 
+            message: 'Invalid winning option ID' 
+          });
+        }
+
+        const previousPayouts = await client.query(
+          'SELECT id, user_id, amount, payout, status FROM bets WHERE challenge_id = $1 AND status IN ($2, $3)',
+          [challengeId, 'won', 'lost']
+        );
+
+        for (const bet of previousPayouts.rows) {
+          if (bet.status === 'won' && bet.payout) {
+            await client.query(
+              'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
+              [bet.payout, bet.user_id, 'BRT']
+            );
+          }
+          await client.query(
+            'UPDATE bets SET status = $1, payout = NULL WHERE id = $2',
+            ['active', bet.id]
+          );
+        }
+
+        await client.query(
+          'UPDATE challenges SET winning_option_id = $1, status = $2, resolved_at = NOW(), updated_at = NOW() WHERE id = $3',
+          [newWinningOptionId, 'resolved', challengeId]
+        );
+
+        await client.query(
+          'INSERT INTO payout_jobs (challenge_id, status, idempotency_key) VALUES ($1, $2, $3)',
+          [challengeId, 'pending', 'dispute-resolution-' + disputeId + '-' + Date.now()]
+        );
+
+      } else if (decision === 'refund_all') {
+        const allBets = await client.query(
+          'SELECT id, user_id, amount FROM bets WHERE challenge_id = $1',
+          [challengeId]
+        );
+
+        for (const bet of allBets.rows) {
+          const balanceResult = await client.query(
+            'SELECT balance FROM user_balances WHERE user_id = $1 AND crypto = $2',
+            [bet.user_id, 'BRT']
+          );
+
+          const balanceBefore = parseFloat(balanceResult.rows[0].balance);
+          const balanceAfter = balanceBefore + parseFloat(bet.amount);
+
+          await client.query(
+            'UPDATE user_balances SET balance = $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
+            [balanceAfter, bet.user_id, 'BRT']
+          );
+
+          await client.query(
+            'UPDATE bets SET status = $1, payout = NULL WHERE id = $2',
+            ['refunded', bet.id]
+          );
+
+          await client.query(
+            'INSERT INTO challenge_ledger (challenge_id, bet_id, user_id, transaction_type, amount, balance_before, balance_after) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [challengeId, bet.id, bet.user_id, 'refund', bet.amount, balanceBefore, balanceAfter]
+          );
+        }
+
+        await client.query(
+          'UPDATE challenges SET status = $1, updated_at = NOW() WHERE id = $2',
+          ['cancelled', challengeId]
+        );
+      }
+
+      await client.query(
+        'INSERT INTO dispute_resolutions (dispute_id, moderator_id, decision, notes, new_winning_option_id) VALUES ($1, $2, $3, $4, $5)',
+        [disputeId, moderatorId, decision, notes, newWinningOptionId]
+      );
+
+      await client.query(
+        'UPDATE disputes SET status = $1 WHERE id = $2',
+        ['resolved', disputeId]
+      );
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        message: 'Dispute resolved successfully',
+        decision
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error resolving dispute:', error);
+      res.status(500).json({ success: false, error: error.message });
+    } finally {
+      client.release();
+    }
+  }
 }
 
 module.exports = new ChallengeController();
