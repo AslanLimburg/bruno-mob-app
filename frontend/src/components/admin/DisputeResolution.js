@@ -28,12 +28,12 @@ const DisputeResolution = ({ dispute, onBack }) => {
 
       if (!response.ok) throw new Error('Failed to fetch challenge details');
       
-      const data = await response.json();
-      setChallengeDetails(data.challenge);
+      const responseData = await response.json();
+      setChallengeDetails(responseData.data);
       
       // Set default winning option
-      if (data.challenge.winning_option_id) {
-        setNewWinningOptionId(data.challenge.winning_option_id.toString());
+      if (responseData.data && responseData.data.winning_option_id) {
+        setNewWinningOptionId(responseData.data.winning_option_id.toString());
       }
       
       setLoading(false);
@@ -78,15 +78,15 @@ const DisputeResolution = ({ dispute, onBack }) => {
         }
       );
 
-      const data = await response.json();
+      const responseData = await response.json();
 
-      if (data.success) {
+      if (responseData.success) {
         setMessage('✅ Dispute resolved successfully!');
         setTimeout(() => {
           onBack();
         }, 2000);
       } else {
-        setMessage(`❌ Error: ${data.error || 'Failed to resolve dispute'}`);
+        setMessage(`❌ Error: ${responseData.error || 'Failed to resolve dispute'}`);
       }
     } catch (error) {
       console.error('Error resolving dispute:', error);

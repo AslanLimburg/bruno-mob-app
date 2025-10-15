@@ -693,3 +693,43 @@
     min-width: 120px;
   }
 }
+
+/* Fix white text on white background */
+.form-group label {
+  color: #333 !important;
+}
+
+.form-group select,
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+  color: #333 !important;
+}
+
+.radio-group label {
+  color: #333 !important;
+}
+
+.radio-content span {
+  color: #666 !important;
+}
+
+/* Fix input text color - orange */
+.form-group input[type="number"] {
+  color: #ff6b35 !important;
+  background: white !important;
+}
+
+.form-group input[type="text"] {
+  background: white !important;
+}
+
+/* Fix input text color - orange */
+.form-group input[type="number"] {
+  color: #ff6b35 !important;
+  background: white !important;
+}
+
+.form-group input[type="text"] {
+  background: white !important;
+}
