@@ -134,15 +134,6 @@ class AuthController {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
-      // ВРЕМЕННО ОТКЛЮЧЕНО ДЛЯ ТЕСТИРОВАНИЯ
-      //if (!user.email_verified) {
-      //  return res.status(403).json({ 
-      //    success: false, 
-      //    message: 'Please verify your email',
-      //    requiresVerification: true
-      //  });
-     // }
-
       await User.updateLastLogin(user.id);
 
       const balances = await User.getBalances(user.id);
@@ -262,6 +253,31 @@ class AuthController {
       console.error('Get me error:', error);
       res.status(500).json({ success: false, message: 'Server error' });
     }
+  }
+
+  // Google OAuth Success Handler
+  static async googleAuthSuccess(req, res) {
+    try {
+      const user = req.user;
+
+      const token = generateToken(user.id);
+
+      // Редирект на frontend с токеном
+      res.redirect(`http://localhost:3000/auth/google/success?token=${token}&user=${encodeURIComponent(JSON.stringify({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }))}`);
+    } catch (error) {
+      console.error('Google auth success error:', error);
+      res.redirect('http://localhost:3000/login?error=auth_failed');
+    }
+  }
+
+  // Google OAuth Failure Handler
+  static async googleAuthFailure(req, res) {
+    res.redirect('http://localhost:3000/login?error=google_auth_failed');
   }
 }
 

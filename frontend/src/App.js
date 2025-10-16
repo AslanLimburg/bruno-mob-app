@@ -7,6 +7,7 @@ import EmailVerification from "./components/auth/EmailVerification";
 import ReferralRegister from "./components/auth/ReferralRegister";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import ResetPassword from "./components/auth/ResetPassword";
+import GoogleAuthCallback from "./components/auth/GoogleAuthCallback";
 import Dashboard from "./components/dashboard/Dashboard";
 import Referral from "./components/referral/Referral";
 import Lottery from "./components/lottery/Lottery";
@@ -62,6 +63,7 @@ function AppContent() {
             </PublicRoute>
           }
         />
+        <Route path="/auth/google/success" element={<GoogleAuthCallback />} />
         <Route
           path="/signup"
           element={

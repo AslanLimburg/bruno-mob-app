@@ -1,4 +1,6 @@
 require('dotenv').config();
+const passport = require('passport');
+require('./config/passport')(passport);
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -19,6 +21,8 @@ app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
 app.use(morgan('dev'));
 app.use(express.json());
+// Passport middleware
+app.use(passport.initialize());
 
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use('/api/', limiter);
