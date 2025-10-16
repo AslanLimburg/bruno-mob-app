@@ -98,37 +98,44 @@ const ClubAvalanche = () => {
   };
 
   const copyToClipboard = (text, type) => {
-    navigator.clipboard.writeText(text);
-    alert(`${type} copied to clipboard!`);
+    navigator.clipboard.writeText(text)
+      .then(() => alert(`${type} copied to clipboard!`))
+      .catch(() => alert('Failed to copy'));
   };
 
   const shareWhatsApp = () => {
+    const ownedProgram = myPrograms.find(p => p.program === selectedProgram);
     if (!ownedProgram) return;
     
-    const code = ownedProgram.referral_code;
-    const program = selectedProgram;
-    const referralUrl = `${BASE_URL}/ref/${code}?program=${program}`;
-    const text = `🎯 Join Bruno Kapital Club Avalanche!\n\n` +
-                 `Use my referral code: ${code}\n` +
-                 `Program: ${program}\n\n` +
-                 `Link: ${referralUrl}`;
-    
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const message = `🎉 Join Bruno Token - Club Avalanche!\n\n💎 Use my referral code: ${ownedProgram.referral_code}\n🔗 Link: ${BASE_URL}/ref/${ownedProgram.referral_code}?program=${selectedProgram}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const shareTelegram = () => {
+    const ownedProgram = myPrograms.find(p => p.program === selectedProgram);
     if (!ownedProgram) return;
     
-    const code = ownedProgram.referral_code;
-    const program = selectedProgram;
-    const referralUrl = `${BASE_URL}/ref/${code}?program=${program}`;
-    const text = `🎯 Join Bruno Kapital Club Avalanche!\n\n` +
-                 `Use my referral code: ${code}\n` +
-                 `Program: ${program}`;
+    const message = `🎉 Join Bruno Token - Club Avalanche!\n\n💎 Use my referral code: ${ownedProgram.referral_code}\n🔗 Link: ${BASE_URL}/ref/${ownedProgram.referral_code}?program=${selectedProgram}`;
+    const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(BASE_URL + '/ref/' + ownedProgram.referral_code + '?program=' + selectedProgram)}&text=${encodeURIComponent(message)}`;
+    window.open(telegramUrl, '_blank');
+  };
+
+  const shareViaBrunoChat = () => {
+    const ownedProgram = myPrograms.find(p => p.program === selectedProgram);
+    if (!ownedProgram) return;
     
-    const url = `https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const message = `🎉 Join Bruno Token - Club Avalanche!\n\n💎 Use my referral code: ${ownedProgram.referral_code}\n🔗 Link: ${BASE_URL}/ref/${ownedProgram.referral_code}?program=${selectedProgram}`;
+    
+    // Сохраняем сообщение для BrunoChat
+    localStorage.setItem('brunoChat_shareMessage', message);
+    
+    // Переключаем вкладку на messenger через событие
+    const event = new CustomEvent('switchToDashboardTab', { detail: 'messenger' });
+    window.dispatchEvent(event);
+    
+    // Закрываем модальное окно
+    setShowModal(false);
   };
 
   const copyQR = async () => {
@@ -260,14 +267,14 @@ const ClubAvalanche = () => {
                 <div className="modal-section">
                   <h3>Share Via</h3>
                   <div className="share-buttons">
-                    <button onClick={shareWhatsApp}>
+                    <button onClick={shareWhatsApp} className="share-btn-whatsapp">
                       📱 WhatsApp
                     </button>
-                    <button onClick={shareTelegram}>
+                    <button onClick={shareTelegram} className="share-btn-telegram">
                       💬 Telegram
                     </button>
-                    <button onClick={() => alert('Bruno Messenger - coming soon')}>
-                      ✉️ Bruno Messenger
+                    <button onClick={shareViaBrunoChat} className="share-btn-brunochat">
+                      💬 BrunoChat
                     </button>
                   </div>
                 </div>

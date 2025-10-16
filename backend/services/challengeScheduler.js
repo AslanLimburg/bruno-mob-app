@@ -53,6 +53,12 @@ class ChallengeScheduler {
       return [];
     }
   }
+
+  start() {
+    console.log('⏰ Challenge Scheduler started (runs every minute)');
+    this.processScheduled();
+    setInterval(() => this.processScheduled(), 60000);
+  }
 }
 
 module.exports = new ChallengeScheduler();

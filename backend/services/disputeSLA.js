@@ -18,6 +18,12 @@ class DisputeSLA {
       return { success: false, error: error.message };
     }
   }
+
+  start() {
+    console.log('⏰ Dispute SLA Checker started (runs every hour)');
+    this.checkDeadlines();
+    setInterval(() => this.checkDeadlines(), 3600000); // Каждый час
+  }
 }
 
 module.exports = new DisputeSLA();

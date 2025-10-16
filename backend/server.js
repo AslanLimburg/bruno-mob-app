@@ -12,7 +12,8 @@ const referralRoutes = require('./routes/referralRoutes');
 const lotteryRoutes = require('./routes/lotteryRoutes');
 const clubAvalancheRoutes = require('./routes/clubAvalancheRoutes');
 const challengeRoutes = require('./routes/challengeRoutes'); // ← ДОБАВЛЕНО
-const scheduler = require("./scheduler");
+const messengerRoutes = require('./routes/messengerRoutes');
+const { startAllSchedulers } = require("./scheduler");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,7 +25,7 @@ app.use(express.json());
 // Passport middleware
 app.use(passport.initialize());
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }); // Увеличили до 1000 для de
 app.use('/api/', limiter);
 
 app.get('/health', (req, res) => {
@@ -36,10 +37,10 @@ app.use('/api/referral', referralRoutes);
 app.use('/api/lottery', lotteryRoutes);
 app.use('/api/club-avalanche', clubAvalancheRoutes);
 app.use('/api/challenge', challengeRoutes); // ← ДОБАВЛЕНО
+app.use('/api/messenger', messengerRoutes);
 
 // Запустить Unified Scheduler
-scheduler.start();
-
+startAllSchedulers();
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });

@@ -2271,3 +2271,61 @@
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.9);
 }
+/* User Info в header - яркий бирюзовый */
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 15px;
+  margin-left: auto;
+  padding: 10px 20px;
+  background: rgba(0, 206, 209, 0.15);
+  border-radius: 10px;
+  border: 2px solid #00CED1;
+}
+
+.user-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00CED1;
+  text-shadow: 0 0 10px rgba(0, 206, 209, 0.3);
+}
+
+.user-email {
+  font-size: 15px;
+  color: #00CED1;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.user-id {
+  font-size: 13px;
+  color: #00CED1;
+  font-family: monospace;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Вторая строка кнопок */
+.tabs-row-2 {
+  margin-top: 10px;
+}
+
+/* Placeholder для Star Challenge */
+.star-challenge-placeholder {
+  text-align: center;
+  padding: 100px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.star-challenge-placeholder h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.star-challenge-placeholder p {
+  font-size: 18px;
+  margin: 10px 0;
+}

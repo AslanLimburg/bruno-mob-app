@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import "./Dashboard.css";
 import SendModal from "./SendModal";
@@ -8,6 +8,7 @@ import Lottery from "../lottery/Lottery";
 import ClubAvalanche from "../club-avalanche/ClubAvalanche";
 import Challenge from '../challenge/Challenge';
 import ModeratorDashboard from '../admin/ModeratorDashboard';
+import Messenger from '../messenger/Messenger';
 
 // Mock Data
 const mockTransactions = [
@@ -40,15 +41,30 @@ const Dashboard = ({addNotification}) => {
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [ticketCount, setTicketCount] = useState(1);
-  const [isMessengerOpen, setIsMessengerOpen] = useState(false);
-  const [messageText, setMessageText] = useState("");
-  const [messages, setMessages] = useState([
-    {id:1,text:"Welcome to Bruno Token!",type:"received",time:"10:00 AM"},
-    {id:2,text:"How can I help you today?",type:"received",time:"10:01 AM"},
-  ]);
   
   const totalBalance = typeof user?.balances?.BRT === 'number' ? user.balances.BRT : 0;
   const referralCode = user?.referralCode || "BRT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  
+  // Listener для переключения вкладки из других компонентов (например, ClubAvalanche)
+  useEffect(() => {
+    const handleTabSwitch = (event) => {
+      setActiveTab(event.detail);
+    };
+    
+    window.addEventListener('switchToDashboardTab', handleTabSwitch);
+    
+    return () => {
+      window.removeEventListener('switchToDashboardTab', handleTabSwitch);
+    };
+  }, []);
+  
+  // Проверка сообщения для BrunoChat при загрузке
+  useEffect(() => {
+    const shareMessage = localStorage.getItem('brunoChat_shareMessage');
+    if (shareMessage && activeTab === 'messenger') {
+      // Сообщение будет обработано в компоненте Messenger
+    }
+  }, [activeTab]);
   
   const handleRedeemCoupon = () => {
     if (!couponCode) {
@@ -68,30 +84,6 @@ const Dashboard = ({addNotification}) => {
     addNotification("success", `Purchased ${ticketCount} ticket(s) for ${cost} BRT!`);
   };
   
-  const handleSendMessage = () => {
-    if (!messageText.trim()) return;
-    
-    const newMessage = {
-      id: messages.length + 1,
-      text: messageText,
-      type: "sent",
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-    };
-    
-    setMessages([...messages, newMessage]);
-    setMessageText("");
-    
-    // Auto reply
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: prev.length + 1,
-        text: "Thanks for your message! Our team will respond shortly.",
-        type: "received",
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      }]);
-    }, 1000);
-  };
-  
   const handleBuyTokens = (amount, price) => {
     addNotification("success", `Purchase initiated: ${amount} BRT for $${price}`);
   };
@@ -102,15 +94,25 @@ const Dashboard = ({addNotification}) => {
   
   return (
     <div className="dashboard-container">
-      {/* Header */}
+      {/* Header with Logo and User Info */}
       <div className="dashboard-header">
         <div className="dashboard-logo">
-          <img src="/images/logo.png" alt="Logo" className="logo-icon"/>
+          {/* Новый лого - замени src на путь к твоему новому лого */}
+          <img src="/images/logo-new.png" alt="Bruno Token Logo" className="logo-icon" 
+               onError={(e) => e.target.src = "/images/logo.png"} />
           <div className="logo-text">
             <h1>Bruno Token</h1>
             <span className="logo-subtitle">Club Avalanche</span>
           </div>
         </div>
+        
+        {/* User Info */}
+        <div className="user-info">
+          <div className="user-name">{user?.name || 'User'}</div>
+          <div className="user-email">{user?.email || 'user@example.com'}</div>
+          <div className="user-id">ID: {user?.id || '000000'}</div>
+        </div>
+        
         <div className="header-actions">
           <button onClick={()=>setIsSendModalOpen(true)} className="btn-action">Send</button>
           <button onClick={()=>setIsReceiveModalOpen(true)} className="btn-action">Receive</button>
@@ -127,15 +129,21 @@ const Dashboard = ({addNotification}) => {
           <div className="balance-subtitle">≈ ${(totalBalance * 0.1).toLocaleString()} USD</div>
         </div>
         
-        {/* Tabs */}
+        {/* Tabs - Row 1 */}
         <div className="tabs">
           <button className={activeTab==="overview"?"tab active":"tab"} onClick={()=>setActiveTab("overview")}>Overview</button>
           <button className={activeTab==="shop"?"tab active":"tab"} onClick={()=>setActiveTab("shop")}>Shop</button>
           <button className={activeTab==="coupons"?"tab active":"tab"} onClick={()=>setActiveTab("coupons")}>Coupons</button>
           <button className={activeTab==="lottery"?"tab active":"tab"} onClick={()=>setActiveTab("lottery")}>Lottery</button>
           <button className={activeTab==="transactions"?"tab active":"tab"} onClick={()=>setActiveTab("transactions")}>Transactions</button>
+        </div>
+        
+        {/* Tabs - Row 2 */}
+        <div className="tabs tabs-row-2">
           <button className={activeTab==="club"?"tab active":"tab"} onClick={()=>setActiveTab("club")}>Club Avalanche</button>
           <button className={activeTab==="challenge"?"tab active":"tab"} onClick={()=>setActiveTab("challenge")}>🎯 Challenge</button>
+          <button className={activeTab==="messenger"?"tab active":"tab"} onClick={()=>setActiveTab("messenger")}>💬 BrunoChat</button>
+          <button className={activeTab==="starchallenge"?"tab active":"tab"} onClick={()=>setActiveTab("starchallenge")}>⭐ BRT Star Challenge</button>
           {user?.role === 'moderator' && (
             <button className={activeTab==="moderator"?"tab active":"tab"} onClick={()=>setActiveTab("moderator")}>⚖️ Moderator</button>
           )}
@@ -369,52 +377,22 @@ const Dashboard = ({addNotification}) => {
             </div>
           </div>
         )}
-        {activeTab==="moderator" && <ModeratorDashboard />}
-        
         {activeTab==="club" && <ClubAvalanche />}
         {activeTab==="challenge" && <Challenge />}
+        {activeTab==="messenger" && <Messenger />}
+        {activeTab==="starchallenge" && (
+          <div className="star-challenge-placeholder">
+            <h2>⭐ BRT STAR CHALLENGE</h2>
+            <p>Coming Soon...</p>
+            <p style={{color: '#999', fontSize: '14px'}}>This exciting new feature is under development!</p>
+          </div>
+        )}
+        {activeTab==="moderator" && <ModeratorDashboard />}
       </div>
       
       <SendModal isOpen={isSendModalOpen} onClose={()=>setIsSendModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
       <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
       <SwapModal isOpen={isSwapModalOpen} onClose={()=>setIsSwapModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
-      
-      {/* Messenger Button */}
-      <button onClick={()=>setIsMessengerOpen(!isMessengerOpen)} className="messenger-button">
-        💬
-        {messages.filter(m=>m.type==="received").length > 2 && <span className="messenger-badge">1</span>}
-      </button>
-      
-      {/* Messenger Modal */}
-      {isMessengerOpen && (
-        <div className="messenger-modal">
-          <div className="messenger-header">
-            <h4>💬 Support Chat</h4>
-            <button onClick={()=>setIsMessengerOpen(false)} className="btn-close-messenger">×</button>
-          </div>
-          
-          <div className="messenger-messages">
-            {messages.map(msg => (
-              <div key={msg.id} className={`message-item ${msg.type}`}>
-                <div className="message-bubble">{msg.text}</div>
-                <div className="message-time">{msg.time}</div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="messenger-input-area">
-            <input 
-              type="text" 
-              value={messageText} 
-              onChange={(e)=>setMessageText(e.target.value)}
-              onKeyPress={(e)=>e.key==="Enter"&&handleSendMessage()}
-              placeholder="Type a message..."
-              className="messenger-input"
-            />
-            <button onClick={handleSendMessage} className="btn-send-message">Send</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
