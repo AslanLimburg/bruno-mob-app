@@ -135,7 +135,7 @@ class StarsChallengeService {
       
       // Записать транзакцию
       await client.query(
-        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, transaction_type, status, reference_id)
+        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, reference_id)
          VALUES ($1, 1, 'BRT', 1, 'challenge_submission', 'completed', $2)`,
         [userId, challengeId]
       );

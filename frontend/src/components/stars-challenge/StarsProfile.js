@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL.replace("/api", "");
 
 const StarsProfile = ({ user }) => {
   const [photos, setPhotos] = useState([]);
@@ -263,7 +264,7 @@ const StarsProfile = ({ user }) => {
           <h2>🌟 Main Photo</h2>
           <div className="photo-card main">
             <div className="photo-wrapper">
-              <img src={mainPhoto.photo_url} alt="Main" />
+              <img src={`${BASE_URL}${mainPhoto.photo_url}`} alt="Main" />
               
               {mainPhoto.is_expiring_soon && (
                 <div className="expiring-badge blinking">
@@ -312,7 +313,7 @@ const StarsProfile = ({ user }) => {
             {additionalPhotos.map(photo => (
               <div key={photo.id} className="photo-card">
                 <div className="photo-wrapper">
-                  <img src={photo.photo_url} alt={`Photo ${photo.id}`} />
+                  <img src={`${BASE_URL}${photo.photo_url}`} alt={`Photo ${photo.id}`} />
                   
                   {photo.is_expiring_soon && (
                     <div className="expiring-badge blinking">

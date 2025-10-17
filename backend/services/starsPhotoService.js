@@ -5,13 +5,25 @@
 
 const { pool } = require('../config/database');
 const cloudinary = require('cloudinary').v2;
+const path = require('path');
 
-// Cloudinary configuration (добавь в .env)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Cloudinary configuration
+const isCloudinaryConfigured = !!(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+);
+
+if (isCloudinaryConfigured) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+  console.log('✅ Cloudinary configured');
+} else {
+  console.log('⚠️  Cloudinary not configured - using local storage');
+}
 
 class StarsPhotoService {
   
@@ -50,7 +62,7 @@ class StarsPhotoService {
           );
           
           if (daysSinceLastChange < 7) {
-            throw new Error(`Главное фото можно менять раз в неделю. Осталось дней: ${7 - daysSinceLastChange}`);
+            throw new Error(`Main photo can be changed once per week. Days remaining: ${7 - daysSinceLastChange}`);
           }
           
           // Удалить старое главное фото
@@ -89,20 +101,29 @@ class StarsPhotoService {
         
         // Записать транзакцию
         await client.query(
-          `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, transaction_type, status)
+          `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status)
            VALUES ($1, 1, 'BRT', 1, 'photo_upload', 'completed')`,
           [userId]
         );
       }
       
-      // Загрузить на Cloudinary с AI Moderation
-      const uploadResult = await cloudinary.uploader.upload(file.path, {
-        folder: 'bruno-stars',
-        resource_type: 'image',
-        moderation: 'aws_rek', // AI модерация (требует paid plan)
-        // Альтернатива для free tier:
-        // transformation: [{ quality: 'auto', fetch_format: 'auto' }]
-      });
+      let photoUrl, cloudinaryPublicId = null;
+      
+      // Загрузить фото
+      if (isCloudinaryConfigured) {
+        // Загрузить на Cloudinary с AI Moderation
+        const uploadResult = await cloudinary.uploader.upload(file.path, {
+          folder: 'bruno-stars',
+          resource_type: 'image',
+          moderation: 'aws_rek', // AI модерация (требует paid plan)
+        });
+        
+        photoUrl = uploadResult.secure_url;
+        cloudinaryPublicId = uploadResult.public_id;
+      } else {
+        // Использовать local storage
+        photoUrl = `/uploads/stars/${file.filename}`;
+      }
       
       // Сохранить в БД
       const result = await client.query(
@@ -112,10 +133,10 @@ class StarsPhotoService {
          RETURNING *`,
         [
           userId,
-          uploadResult.secure_url,
-          uploadResult.public_id,
+          photoUrl,
+          cloudinaryPublicId,
           isMainPhoto,
-          uploadResult.moderation ? 'approved' : 'pending', // если AI прошла - approved
+          'approved', // пока без модерации для local
           'active'
         ]
       );
@@ -253,7 +274,7 @@ class StarsPhotoService {
       
       // Записать транзакцию
       await client.query(
-        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, transaction_type, status, reference_id)
+        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, reference_id)
          VALUES ($1, 1, 'BRT', 1, 'photo_renewal', 'completed', $2)`,
         [userId, photoId]
       );
@@ -293,8 +314,8 @@ class StarsPhotoService {
         throw new Error('Photo not found or you are not the owner');
       }
       
-      // Удалить из Cloudinary
-      if (photo.rows[0].cloudinary_public_id) {
+      // Удалить из Cloudinary (только если настроен)
+      if (isCloudinaryConfigured && photo.rows[0].cloudinary_public_id) {
         await cloudinary.uploader.destroy(photo.rows[0].cloudinary_public_id);
       }
       
@@ -334,8 +355,8 @@ class StarsPhotoService {
       console.log(`🧹 Found ${expired.rows.length} expired photos to delete`);
       
       for (const photo of expired.rows) {
-        // Удалить из Cloudinary
-        if (photo.cloudinary_public_id) {
+        // Удалить из Cloudinary (только если настроен)
+        if (isCloudinaryConfigured && photo.cloudinary_public_id) {
           await cloudinary.uploader.destroy(photo.cloudinary_public_id);
         }
         

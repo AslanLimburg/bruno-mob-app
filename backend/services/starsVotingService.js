@@ -99,7 +99,7 @@ class StarsVotingService {
       // Записать транзакцию (отправитель → владелец)
       const txn1 = await client.query(
         `INSERT INTO transactions 
-         (from_user_id, to_user_id, crypto, amount, transaction_type, status, reference_id, reference_type)
+         (from_user_id, to_user_id, crypto, amount, type, status, reference_id, reference_type)
          VALUES ($1, $2, 'BRT', $3, 'star_reward', 'completed', $4, 'photo')
          RETURNING id`,
         [fromUserId, ownerId, ownerReceives, photoId]
@@ -108,7 +108,7 @@ class StarsVotingService {
       // Записать транзакцию gas fee
       await client.query(
         `INSERT INTO transactions 
-         (from_user_id, to_user_id, crypto, amount, transaction_type, status, reference_id, reference_type)
+         (from_user_id, to_user_id, crypto, amount, type, status, reference_id, reference_type)
          VALUES ($1, 2, 'BRT', $2, 'gas_fee', 'completed', $3, 'photo')`,
         [fromUserId, gasFee, photoId]
       );
