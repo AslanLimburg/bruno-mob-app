@@ -8,6 +8,7 @@ import axios from 'axios';
 import StarsProfile from './StarsProfile';
 import StarsChallengeList from './StarsChallengeList';
 import StarsGallery from './StarsGallery';
+import StarsAdmin from './StarsAdmin';
 import './StarsChallenge.css';
 
 const API_URL = process.env.REACT_APP_API_URL;
@@ -17,7 +18,11 @@ const StarsChallenge = ({ user }) => {
   const [hasGSI, setHasGSI] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAdmin, setShowAdmin] = useState(false);
   
+  // Check if user is moderator or admin
+// Only Stars Admin has access to Admin Panel
+const isAdmin = user.email === 'stars-admin@brunotoken.com';  
   useEffect(() => {
     checkGSIActivation();
   }, []);
@@ -157,6 +162,26 @@ const StarsChallenge = ({ user }) => {
         {activeSubTab === 'gallery' && <StarsGallery user={user} />}
       </div>
       
+      {/* Admin Section - Only for Moderators/Admins */}
+      {isAdmin && (
+        <div className="admin-section-wrapper">
+          <div className="admin-divider">
+            <button 
+              className="admin-toggle-btn"
+              onClick={() => setShowAdmin(!showAdmin)}
+            >
+              🛠️ Admin Panel {showAdmin ? '▼' : '▶'}
+            </button>
+          </div>
+          
+          {showAdmin && (
+            <div className="admin-panel-content">
+              <StarsAdmin user={user} />
+            </div>
+          )}
+        </div>
+      )}
+      
       {/* Error Display */}
       {error && (
         <div className="error-notification">
@@ -165,6 +190,56 @@ const StarsChallenge = ({ user }) => {
           <button onClick={() => setError('')}>✕</button>
         </div>
       )}
+      
+      <style jsx>{`
+        .admin-section-wrapper {
+          margin-top: 40px;
+          border-top: 2px solid #e5e7eb;
+          padding-top: 20px;
+        }
+        
+        .admin-divider {
+          text-align: center;
+          margin-bottom: 20px;
+        }
+        
+        .admin-toggle-btn {
+          padding: 12px 32px;
+          border: 2px solid #8b5cf6;
+          border-radius: 8px;
+          background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+          color: white;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 16px;
+          transition: all 0.3s;
+          box-shadow: 0 4px 6px rgba(139, 92, 246, 0.2);
+        }
+        
+        .admin-toggle-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 8px rgba(139, 92, 246, 0.3);
+        }
+        
+        .admin-panel-content {
+          animation: slideDown 0.3s ease-out;
+          background: #f9fafb;
+          border-radius: 12px;
+          padding: 20px;
+          margin-top: 20px;
+        }
+        
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
