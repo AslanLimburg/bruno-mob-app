@@ -392,7 +392,7 @@ const Dashboard = ({addNotification}) => {
       </div>
       
       <SendModal isOpen={isSendModalOpen} onClose={()=>setIsSendModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
-      <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
+      <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification} user={user}/>  
       <SwapModal isOpen={isSwapModalOpen} onClose={()=>setIsSwapModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
     </div>
   );

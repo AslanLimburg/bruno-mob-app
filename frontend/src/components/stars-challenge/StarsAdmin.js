@@ -83,29 +83,35 @@ const StarsAdmin = ({ user }) => {
     setLoading(true);
     setMessage('');
     
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/stars/challenge/create`, {
-        nominationId: parseInt(selectedNomination),
-        title: chalTitle,
-        description: chalDesc,
-        minStake: parseFloat(minStake),
-        maxStake: parseFloat(maxStake),
-        duration: parseInt(duration)
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      setMessage('✅ Challenge created successfully!');
-      setChalTitle('');
-      setChalDesc('');
-      setSelectedNomination('');
-      loadData();
-    } catch (err) {
-      setMessage('❌ Error: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setLoading(false);
-    }
+try {
+  const token = localStorage.getItem('token');
+  
+  // Вычислить end_date из duration
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + parseInt(duration));
+  
+  await axios.post(`${API_URL}/stars/challenge/create`, {
+    nominationId: parseInt(selectedNomination),
+    title: chalTitle,
+    description: chalDesc,
+    adminWallet: user.email,  // Email Stars Admin
+    minStake: parseFloat(minStake),
+    maxStake: parseFloat(maxStake),
+    endDate: endDate.toISOString()
+  }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  
+  setMessage('✅ Challenge created successfully!');
+  setChalTitle('');
+  setChalDesc('');
+  setSelectedNomination('');
+  loadData();
+} catch (err) {
+  setMessage('❌ Error: ' + (err.response?.data?.error || err.message));
+} finally {
+  setLoading(false);
+}
   };
   
   const closeChallenge = async (challengeId) => {

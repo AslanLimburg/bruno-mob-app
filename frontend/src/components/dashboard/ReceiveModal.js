@@ -1,16 +1,37 @@
 import React, { useState } from "react";
 import "./Modal.css";
 
-const ReceiveModal = ({ isOpen, onClose, balances, addNotification }) => {
+const ReceiveModal = ({ isOpen, onClose, balances, addNotification, user }) => {
   const [crypto, setCrypto] = useState("BTC");
 
   if (!isOpen) return null;
 
-  // Симуляция адресов кошельков (в реальности они будут из API)
+  // Генерация уникального адреса для каждого пользователя
+  const generateUserAddress = (userId, email, cryptoType) => {
+    // Простая генерация на основе user ID и email
+    const base = `${userId}-${email}`;
+    const hash = Array.from(base).reduce((acc, char) => {
+      return ((acc << 5) - acc + char.charCodeAt(0)) | 0;
+    }, 0);
+    
+    const uniqueId = Math.abs(hash).toString(36).substring(0, 8).toUpperCase();
+    
+    switch(cryptoType) {
+      case 'BTC':
+        return `1${uniqueId}${userId}BTC${Math.abs(hash % 100000)}`;
+      case 'ETH':
+        return `0x${uniqueId}${userId.toString().padStart(4, '0')}ETH${Math.abs(hash % 1000000).toString(16)}`;
+      case 'BRT':
+        return `BRT${uniqueId}${userId}${email.substring(0, 3).toUpperCase()}${Math.abs(hash % 100000)}`;
+      default:
+        return `${cryptoType}${uniqueId}${userId}`;
+    }
+  };
+
   const walletAddresses = {
-    BTC: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-    ETH: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-    BRT: "BR7x4K9mP2vN5qL8wX3tY6fZ1sH9jC2aR5"
+    BTC: generateUserAddress(user.id, user.email, 'BTC'),
+    ETH: generateUserAddress(user.id, user.email, 'ETH'),
+    BRT: generateUserAddress(user.id, user.email, 'BRT')
   };
 
   const currentAddress = walletAddresses[crypto] || "";
