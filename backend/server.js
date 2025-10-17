@@ -12,6 +12,7 @@ const referralRoutes = require('./routes/referralRoutes');
 const lotteryRoutes = require('./routes/lotteryRoutes');
 const clubAvalancheRoutes = require('./routes/clubAvalancheRoutes');
 const challengeRoutes = require('./routes/challengeRoutes'); // ← ДОБАВЛЕНО
+const starsRoutes = require('./routes/starsRoutes');
 const messengerRoutes = require('./routes/messengerRoutes');
 const { startAllSchedulers } = require("./scheduler");
 
@@ -37,6 +38,7 @@ app.use('/api/referral', referralRoutes);
 app.use('/api/lottery', lotteryRoutes);
 app.use('/api/club-avalanche', clubAvalancheRoutes);
 app.use('/api/challenge', challengeRoutes); // ← ДОБАВЛЕНО
+app.use('/api/stars', starsRoutes);
 app.use('/api/messenger', messengerRoutes);
 
 // Запустить Unified Scheduler

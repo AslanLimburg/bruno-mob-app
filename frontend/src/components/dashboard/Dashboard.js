@@ -9,6 +9,7 @@ import ClubAvalanche from "../club-avalanche/ClubAvalanche";
 import Challenge from '../challenge/Challenge';
 import ModeratorDashboard from '../admin/ModeratorDashboard';
 import Messenger from '../messenger/Messenger';
+import StarsChallenge from '../stars-challenge/StarsChallenge';
 
 // Mock Data
 const mockTransactions = [
@@ -380,7 +381,7 @@ const Dashboard = ({addNotification}) => {
         {activeTab==="club" && <ClubAvalanche />}
         {activeTab==="challenge" && <Challenge />}
         {activeTab==="messenger" && <Messenger />}
-        {activeTab==="starchallenge" && (
+        {activeTab === 'starchallenge' && <StarsChallenge user={user} />}
           <div className="star-challenge-placeholder">
             <h2>⭐ BRT STAR CHALLENGE</h2>
             <p>Coming Soon...</p>
