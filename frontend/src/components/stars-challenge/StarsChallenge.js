@@ -25,15 +25,14 @@ const StarsChallenge = ({ user }) => {
   const checkGSIActivation = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/club-avalanche/membership`, {
+      const response = await axios.get(`${API_URL}/club-avalanche/my-programs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Проверить наличие GS-I
-      const gsIMembership = response.data.memberships?.find(m => 
-        m.tier === 'GS-I' && m.status === 'active'
-      );
-      
+      // Check for GS-I membership
+      const gsIMembership = response.data.data?.find(m => 
+        m.program === 'GS-I'
+      );      
       setHasGSI(!!gsIMembership);
       setLoading(false);
       
@@ -65,34 +64,34 @@ const StarsChallenge = ({ user }) => {
             <p className="subtitle">Premium Feature</p>
             
             <div className="requirement-box">
-              <h3>Требуется активация:</h3>
+              <h3>Activation Required:</h3>
               <ul>
                 <li>✅ Club Avalanche GS-I membership</li>
-                <li>💎 Стоимость: 5 BRT</li>
-                <li>🎁 Получите реферальный номер</li>
+                <li>💎 Cost: 5 BRT</li>
+                <li>🎁 Get your referral code</li>
               </ul>
             </div>
             
             <p className="description">
-              После активации вы получите доступ к:
+              After activation you will get access to:
             </p>
             
             <div className="features-grid">
               <div className="feature-item">
                 <span>📸</span>
-                <p>Загрузка фото</p>
+                <p>Upload photos</p>
               </div>
               <div className="feature-item">
                 <span>⭐</span>
-                <p>Получение Stars</p>
+                <p>Receive Stars</p>
               </div>
               <div className="feature-item">
                 <span>🏆</span>
-                <p>Участие в конкурсах</p>
+                <p>Participate in contests</p>
               </div>
               <div className="feature-item">
                 <span>🎯</span>
-                <p>Недельная галерея</p>
+                <p>Weekly gallery</p>
               </div>
             </div>
             
@@ -100,11 +99,11 @@ const StarsChallenge = ({ user }) => {
               className="activate-button"
               onClick={() => window.dispatchEvent(new CustomEvent('switchToDashboardTab', { detail: 'club' }))}
             >
-              Активировать Club Avalanche GS-I
+              Activate Club Avalanche GS-I
             </button>
             
             <p className="note">
-              Активация даёт пожизненный доступ к Stars Challenge
+              Activation gives lifetime access to Stars Challenge
             </p>
           </div>
         </div>
