@@ -16,6 +16,7 @@ const challengeRoutes = require('./routes/challengeRoutes'); // ← ДОБАВЛ
 const starsRoutes = require('./routes/starsRoutes');
 const messengerRoutes = require('./routes/messengerRoutes');
 const { startAllSchedulers } = require("./scheduler");
+const superAdminRoutes = require('./routes/superAdmin');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.use('/api/club-avalanche', clubAvalancheRoutes);
 app.use('/api/challenge', challengeRoutes); // ← ДОБАВЛЕНО
 app.use('/api/stars', starsRoutes);
 app.use('/api/messenger', messengerRoutes);
+app.use('/api/super-admin', superAdminRoutes);
 
 // Запустить Unified Scheduler
 startAllSchedulers();

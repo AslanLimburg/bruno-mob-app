@@ -11,18 +11,54 @@ import GoogleAuthCallback from "./components/auth/GoogleAuthCallback";
 import Dashboard from "./components/dashboard/Dashboard";
 import Referral from "./components/referral/Referral";
 import Lottery from "./components/lottery/Lottery";
+import SuperAdminPanel from "./components/super-admin/SuperAdminPanel";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   if (loading) return <div className="loading">Loading...</div>;
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  
+  // Если не авторизован - редирект на login
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  
+  // Если super-admin - редирект на super-admin panel
+  if (user && user.role === 'super_admin') {
+    return <Navigate to="/super-admin" />;
+  }
+  
+  return children;
+};
+
+const SuperAdminRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+  if (loading) return <div className="loading">Loading...</div>;
+  
+  // Если не авторизован - редирект на login
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  
+  // Если не super-admin - редирект на dashboard
+  if (!user || user.role !== 'super_admin') {
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return children;
 };
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   if (loading) return <div className="loading">Loading...</div>;
-  return !isAuthenticated ? children : <Navigate to="/dashboard" />;
+  
+  // Если авторизован
+  if (isAuthenticated) {
+    // Super-admin идёт на свою панель
+    if (user && user.role === 'super_admin') {
+      return <Navigate to="/super-admin" />;
+    }
+    // Остальные на dashboard
+    return <Navigate to="/dashboard" />;
+  }
+  
+  return children;
 };
 
 const Notification = ({ type, message, onClose }) => (
@@ -104,6 +140,17 @@ function AppContent() {
             </PublicRoute>
           }
         />
+        
+        {/* SUPER ADMIN PANEL */}
+        <Route
+          path="/super-admin"
+          element={
+            <SuperAdminRoute>
+              <SuperAdminPanel addNotification={addNotification} />
+            </SuperAdminRoute>
+          }
+        />
+        
         <Route
           path="/dashboard"
           element={
