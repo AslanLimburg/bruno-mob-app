@@ -10,6 +10,7 @@ import Challenge from '../challenge/Challenge';
 import ModeratorDashboard from '../admin/ModeratorDashboard';
 import Messenger from '../messenger/Messenger';
 import StarsChallenge from '../stars-challenge/StarsChallenge';
+import { useNavigate } from 'react-router-dom';
 
 // Mock Data
 const mockTransactions = [
@@ -36,6 +37,7 @@ const mockReferrals = [
 
 const Dashboard = ({addNotification}) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
@@ -128,6 +130,18 @@ const Dashboard = ({addNotification}) => {
           <h2>Total Balance</h2>
           <div className="balance-amount">{totalBalance.toLocaleString()} BRT</div>
           <div className="balance-subtitle">≈ ${(totalBalance * 0.1).toLocaleString()} USD</div>
+        </div>
+        
+        {/* Vector of Destiny Button - ГЛАВНЫЙ БАННЕР */}
+        <div className="vector-destiny-banner" onClick={() => navigate('/vector-destiny')}>
+          <div className="vector-banner-content">
+            <div className="vector-icon">✨</div>
+            <div className="vector-text">
+              <h3>Vector of Destiny</h3>
+              <p>Discover your personalized astrological forecast</p>
+            </div>
+            <div className="vector-arrow">→</div>
+          </div>
         </div>
         
         {/* Tabs - Row 1 */}
@@ -382,12 +396,6 @@ const Dashboard = ({addNotification}) => {
         {activeTab==="challenge" && <Challenge />}
         {activeTab==="messenger" && <Messenger />}
         {activeTab === 'starchallenge' && <StarsChallenge user={user} />}
-          <div className="star-challenge-placeholder">
-            <h2>⭐ BRT STAR CHALLENGE</h2>
-            <p>Coming Soon...</p>
-            <p style={{color: '#999', fontSize: '14px'}}>This exciting new feature is under development!</p>
-          </div>
-        )}
         {activeTab==="moderator" && <ModeratorDashboard />}
       </div>
       

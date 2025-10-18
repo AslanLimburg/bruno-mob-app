@@ -12,6 +12,7 @@ import Dashboard from "./components/dashboard/Dashboard";
 import Referral from "./components/referral/Referral";
 import Lottery from "./components/lottery/Lottery";
 import SuperAdminPanel from "./components/super-admin/SuperAdminPanel";
+import VectorDestiny from "./components/VectorDestiny/VectorDestiny";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -172,6 +173,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Lottery addNotification={addNotification} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vector-destiny"
+          element={
+            <ProtectedRoute>
+              <VectorDestiny addNotification={addNotification} />
             </ProtectedRoute>
           }
         />
