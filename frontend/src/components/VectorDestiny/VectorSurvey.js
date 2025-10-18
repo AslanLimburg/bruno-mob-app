@@ -15,7 +15,7 @@ const VectorSurvey = ({ membershipLevel, onComplete }) => {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL}/api/vector/questions?level=${membershipLevel}`,
+                `${process.env.REACT_APP_API_URL}/vector/questions?level=${membershipLevel}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -50,7 +50,7 @@ const VectorSurvey = ({ membershipLevel, onComplete }) => {
             };
 
             await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/vector/profile`,
+                `${process.env.REACT_APP_API_URL}/vector/profile`,
                 profileData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -79,7 +79,7 @@ const VectorSurvey = ({ membershipLevel, onComplete }) => {
                 );
             
             case 'choice':
-                const options = JSON.parse(question.options || '[]');
+                const options = Array.isArray(question.options) ? question.options : JSON.parse(question.options || '[]');
                 return (
                     <div className="choice-options">
                         {options.map((option, idx) => (

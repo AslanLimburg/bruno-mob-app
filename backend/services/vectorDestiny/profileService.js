@@ -1,4 +1,4 @@
-const pool = require('../../config/database');
+const { pool } = require('../../config/database');
 const NodeGeocoder = require('node-geocoder');
 const { calculateBirthChart } = require('./astroService');
 
@@ -75,9 +75,9 @@ const createOrUpdateProfile = async (userId, profileData) => {
         
         // Получаем уровень членства
         const membershipResult = await client.query(`
-            SELECT program FROM club_avalanche_memberships 
+            SELECT program FROM gs_memberships 
             WHERE user_id = $1 AND status = 'active'
-            ORDER BY created_at DESC LIMIT 1
+            ORDER BY purchase_date DESC LIMIT 1
         `, [userId]);
         
         const membership_level = membershipResult.rows[0]?.program || 'GS-I';
@@ -232,9 +232,9 @@ const checkAccess = async (userId) => {
     try {
         // Проверяем членство в Club Avalanche
         const result = await pool.query(`
-            SELECT program, status FROM club_avalanche_memberships 
+            SELECT program, status FROM gs_memberships 
             WHERE user_id = $1 AND status = 'active'
-            ORDER BY created_at DESC LIMIT 1
+            ORDER BY purchase_date DESC LIMIT 1
         `, [userId]);
         
         if (result.rows.length === 0) {
