@@ -17,6 +17,7 @@ const starsRoutes = require('./routes/starsRoutes');
 const messengerRoutes = require('./routes/messengerRoutes');
 const { startAllSchedulers } = require("./scheduler");
 const superAdminRoutes = require('./routes/superAdmin');
+const vectorDestinyRoutes = require('./routes/vectorDestiny');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,9 +45,13 @@ app.use('/api/challenge', challengeRoutes); // ← ДОБАВЛЕНО
 app.use('/api/stars', starsRoutes);
 app.use('/api/messenger', messengerRoutes);
 app.use('/api/super-admin', superAdminRoutes);
+app.use('/api/vector', vectorDestinyRoutes);
 
 // Запустить Unified Scheduler
 startAllSchedulers();
+// Vector Destiny Billing Scheduler
+const { startBillingScheduler } = require('./services/vectorDestiny/billingScheduler');
+startBillingScheduler();
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
