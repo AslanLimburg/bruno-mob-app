@@ -50,15 +50,21 @@ router.post('/send', authMiddleware, async (req, res) => {
       
       const senderBalance = parseFloat(senderBalanceResult.rows[0].balance);
       
-      if (senderBalance < parseFloat(amount)) {
-        throw new Error(`Insufficient ${crypto} balance`);
+      // Рассчитать gas fee (0.02 BRT только для BRT переводов)
+      const gasFee = crypto === 'BRT' ? 0.02 : 0;
+      const totalAmount = parseFloat(amount) + gasFee;
+      
+      if (senderBalance < totalAmount) {
+        throw new Error(`Insufficient ${crypto} balance. Need ${totalAmount.toFixed(2)} (${amount} + ${gasFee} gas fee)`);
       }
       
+      // Списать amount + gas fee с отправителя
       await client.query(
         'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
-        [amount, senderId, crypto]
+        [totalAmount, senderId, crypto]
       );
       
+      // Зачислить amount получателю (без gas fee)
       await client.query(
         `INSERT INTO user_balances (user_id, crypto, balance) 
          VALUES ($1, $2, $3) 
@@ -67,18 +73,47 @@ router.post('/send', authMiddleware, async (req, res) => {
         [recipientId, crypto, amount]
       );
       
+      // Записать основную транзакцию
       await client.query(
         `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status) 
          VALUES ($1, $2, $3, $4, 'peer_transfer', 'completed')`,
         [senderId, recipientId, crypto, amount]
       );
       
-      return { recipientEmail, crypto, amount };
+      // Если есть gas fee - начислить на gasfee аккаунт
+      if (gasFee > 0) {
+        const gasFeeAccountResult = await client.query(
+          'SELECT id FROM users WHERE email = $1',
+          ['gasfee@brunotoken.com']
+        );
+        
+        if (gasFeeAccountResult.rows.length > 0) {
+          const gasFeeAccountId = gasFeeAccountResult.rows[0].id;
+          
+          // Начислить gas fee
+          await client.query(
+            `INSERT INTO user_balances (user_id, crypto, balance) 
+             VALUES ($1, $2, $3) 
+             ON CONFLICT (user_id, crypto) 
+             DO UPDATE SET balance = user_balances.balance + $3, updated_at = NOW()`,
+            [gasFeeAccountId, crypto, gasFee]
+          );
+          
+          // Записать транзакцию gas fee
+          await client.query(
+            `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status) 
+             VALUES ($1, $2, $3, $4, 'gas_fee', 'completed')`,
+            [senderId, gasFeeAccountId, crypto, gasFee]
+          );
+        }
+      }
+      
+      return { recipientEmail, crypto, amount, gasFee };
     });
     
     res.json({ 
       success: true, 
-      message: `Successfully sent ${result.amount} ${result.crypto} to ${result.recipientEmail}` 
+      message: `Successfully sent ${result.amount} ${result.crypto} to ${result.recipientEmail}${result.gasFee > 0 ? ` (+ ${result.gasFee} ${result.crypto} gas fee)` : ''}` 
     });
     
   } catch (error) {
