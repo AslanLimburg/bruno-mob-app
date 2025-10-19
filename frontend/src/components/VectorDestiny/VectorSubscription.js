@@ -17,7 +17,7 @@ const VectorSubscription = ({ membershipLevel, profile, onComplete }) => {
             const token = localStorage.getItem('token');
             
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/vector/subscription/trial`,
+                `${process.env.REACT_APP_API_URL}/vector/subscription/trial`,
                 { membership_level: membershipLevel },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -38,7 +38,7 @@ const VectorSubscription = ({ membershipLevel, profile, onComplete }) => {
             const token = localStorage.getItem('token');
             
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/vector/subscription/subscribe`,
+                `${process.env.REACT_APP_API_URL}/vector/subscription/subscribe`,
                 { membership_level: membershipLevel },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

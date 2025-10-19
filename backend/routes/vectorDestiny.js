@@ -226,33 +226,50 @@ router.get('/forecast/:id?', async (req, res) => {
 router.get('/questions', async (req, res) => {
     try {
         const { level } = req.query;
-        const pool = require('../config/database');
+        const { pool } = require('../config/database');
         
-        // Получаем базовые вопросы (для всех)
-        const baseQuestions = await pool.query(
-            `SELECT * FROM vector_questions 
-             WHERE membership_level = 'all' 
-             ORDER BY order_index`
-        );
-        
-        // Получаем вопросы для уровня
-        let levelQuestions = { rows: [] };
-        if (level) {
-            levelQuestions = await pool.query(
-                `SELECT * FROM vector_questions 
-                 WHERE membership_level = $1 
-                 ORDER BY order_index`,
-                [level]
-            );
+        if (!level) {
+            return res.status(400).json({
+                success: false,
+                message: 'Level is required'
+            });
         }
         
-        const allQuestions = [...baseQuestions.rows, ...levelQuestions.rows];
+        // Определяем иерархию уровней
+        const levelHierarchy = {
+            'GS-I': ['all', 'GS-I'],
+            'GS-II': ['all', 'GS-I', 'GS-II'],
+            'GS-III': ['all', 'GS-I', 'GS-II', 'GS-III'],
+            'GS-IV': ['all', 'GS-I', 'GS-II', 'GS-III', 'GS-IV']
+        };
+        
+        const levelsToLoad = levelHierarchy[level] || ['all', 'GS-I'];
+        
+        // Загружаем вопросы для всех уровней до текущего
+        const result = await pool.query(
+            `SELECT * FROM vector_questions 
+             WHERE membership_level = ANY($1)
+             ORDER BY 
+                CASE membership_level 
+                    WHEN 'all' THEN 0
+                    WHEN 'GS-I' THEN 1
+                    WHEN 'GS-II' THEN 2
+                    WHEN 'GS-III' THEN 3
+                    WHEN 'GS-IV' THEN 4
+                END,
+                order_index, 
+                id`,
+            [levelsToLoad]
+        );
+        
+        console.log(`📋 Loading questions for ${level}: ${result.rows.length} questions`);
         
         res.json({
             success: true,
-            data: allQuestions
+            data: result.rows
         });
     } catch (error) {
+        console.error('Get questions error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });

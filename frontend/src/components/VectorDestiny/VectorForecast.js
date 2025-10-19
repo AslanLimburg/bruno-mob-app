@@ -16,7 +16,7 @@ const VectorForecast = ({ profile, subscription }) => {
             const token = localStorage.getItem('token');
             
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL}/api/vector/forecast`,
+                `${process.env.REACT_APP_API_URL}/vector/forecast`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -36,7 +36,7 @@ const VectorForecast = ({ profile, subscription }) => {
             const token = localStorage.getItem('token');
             
             await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/vector/forecast/generate`,
+                `${process.env.REACT_APP_API_URL}/vector/forecast/generate`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );

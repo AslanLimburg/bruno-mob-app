@@ -35,30 +35,51 @@ const VectorSurvey = ({ membershipLevel, onComplete }) => {
         try {
             const token = localStorage.getItem('token');
             
+            // Маппинг языков из выбора в коды
+            const languageMap = {
+                'English 🇬🇧': 'en',
+                'Русский 🇷🇺': 'ru',
+                'العربية 🇦🇪': 'ar',
+                'Español 🇪🇸': 'es',
+                '中文 🇨🇳': 'zh',
+                'हिंदी 🇮🇳': 'hi',
+                'Français 🇫🇷': 'fr',
+                'Deutsch 🇩🇪': 'de'
+            };
+            
             // Формируем данные профиля
             const profileData = {
                 full_name: answers.full_name,
                 gender: answers.gender,
                 birth_date: answers.birth_date,
                 birth_time: answers.birth_time || null,
-                birth_place_city: answers.birth_place?.split(',')[0]?.trim(),
-                birth_place_country: answers.birth_place?.split(',')[1]?.trim(),
+                birth_place_city: answers.birth_city,
+                birth_place_country: answers.birth_country,
                 focus_areas: answers.focus_areas || [],
                 life_phase: answers.life_phase,
                 responses: answers,
-                language: 'en'
+                language: languageMap[answers.preferred_language] || 'en'
             };
 
-            await axios.post(
+            console.log('📤 Sending profile data:', profileData);
+
+            const response = await axios.post(
                 `${process.env.REACT_APP_API_URL}/vector/profile`,
                 profileData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            alert('Profile created successfully! ✨');
-            onComplete();
+            console.log('📥 Profile creation response:', response.data);
+
+            if (response.data.success) {
+                console.log('✅ Profile created successfully! ✨');
+                onComplete();
+            } else {
+                alert('Failed to create profile: ' + response.data.message);
+            }
         } catch (error) {
-            console.error('Submit error:', error);
+            console.error('❌ Submit error:', error);
+            console.error('❌ Error response:', error.response?.data);
             alert(error.response?.data?.message || 'Failed to create profile');
         }
     };

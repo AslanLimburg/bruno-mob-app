@@ -1,4 +1,4 @@
-const pool = require('../../config/database');
+const { pool } = require('../../config/database');
 const OpenAI = require('openai');
 const crypto = require('crypto');
 const moment = require('moment');
@@ -68,14 +68,14 @@ const checkCache = async (cacheKey, language) => {
 
 // Создать промпт для GPT
 const createForecastPrompt = (profile, birthChart, language, level) => {
-    const languageInstruction = LANGUAGE_INSTRUCTIONS[language] || LANGUAGE_INSTRUCTIONS['en'];
+    const languageInstruction = LANGUAGE_INSTRUCTIONS[language] || `in fluent, natural ${language.toUpperCase()}`;
     
     const prompt = `You are a professional, compassionate astrologer. Generate a personalized weekly forecast ${languageInstruction}.
 
 BIRTH CHART:
 - Name: ${profile.full_name}
-- Sun Sign: ${birthChart.sun_sign} (${getZodiacDescription(birthChart.sun_sign)})
-- Moon Sign: ${birthChart.moon_sign}${birthChart.rising_sign ? `\n- Rising Sign: ${birthChart.rising_sign}` : ''}
+- Sun Sign: ${birthChart.sunSign} (${getZodiacDescription(birthChart.sunSign)})
+- Moon Sign: ${birthChart.moonSign}${birthChart.risingSign ? `\n- Rising Sign: ${birthChart.risingSign}` : ''}
 
 PERSONALITY:
 - Style: ${profile.personality_style}
@@ -160,13 +160,13 @@ const generateTemplate = (profile, birthChart, language) => {
     // Упрощенный шаблон на английском (можно расширить)
     const template = `Dear ${profile.full_name},
 
-As a ${birthChart.sun_sign}, this week brings opportunities for growth and positive change.
+As a ${birthChart.sunSign}, this week brings opportunities for growth and positive change.
 
 **Week Overview**: The stars align in your favor, bringing fresh energy and new possibilities.
 
 **Love & Relationships**: Communication flows easily. Express your feelings openly.
 
-**Career & Money**: Your ${birthChart.sun_sign} determination helps you overcome obstacles.
+**Career & Money**: Your ${birthChart.sunSign} determination helps you overcome obstacles.
 
 **Health & Wellness**: Take time for self-care and rest.
 
@@ -204,7 +204,9 @@ const generateForecast = async (userId) => {
         }
         
         const profile = profileResult.rows[0];
-        const birthChart = profile.birth_chart_data;
+        const birthChart = typeof profile.birth_chart_data === 'string' 
+            ? JSON.parse(profile.birth_chart_data) 
+            : profile.birth_chart_data;
         const language = profile.language || 'en';
         const level = profile.membership_level || 'GS-I';
         

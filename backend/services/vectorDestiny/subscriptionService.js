@@ -1,4 +1,4 @@
-const pool = require('../../config/database');
+const { pool } = require('../../config/database');
 const moment = require('moment');
 
 // Цены подписок в BRT

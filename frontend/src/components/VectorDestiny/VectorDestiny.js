@@ -30,6 +30,8 @@ const VectorDestiny = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
+            console.log('🔑 Access response:', accessRes.data);
+
             if (!accessRes.data.hasAccess) {
                 setCurrentStep('no-access');
                 setLoading(false);
@@ -45,6 +47,8 @@ const VectorDestiny = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
+            console.log('📋 Profile response:', profileRes.data);
+
             if (profileRes.data.success) {
                 setProfile(profileRes.data.data);
             }
@@ -55,31 +59,42 @@ const VectorDestiny = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
+            console.log('💳 Subscription response:', subRes.data);
             setSubscription(subRes.data.data);
 
             // Определяем шаг
             if (!profileRes.data.success) {
+                console.log('❌ No profile found, staying on survey');
                 setCurrentStep('survey');
             } else if (!subRes.data.data.active) {
+                console.log('✅ Profile exists, moving to subscription');
                 setCurrentStep('subscription');
             } else {
+                console.log('✅ Subscription active, moving to forecast');
                 setCurrentStep('forecast');
             }
 
             setLoading(false);
 
         } catch (error) {
-            console.error('Check access error:', error);
+            console.error('❌ Check access error:', error);
             setLoading(false);
         }
     };
 
-    const handleSurveyComplete = () => {
+    const handleSurveyComplete = async () => {
+        console.log('🎯 Survey completed! Switching to subscription...');
         setCurrentStep('subscription');
-        checkAccess();
+        
+        // Даем время серверу сохранить профиль
+        setTimeout(async () => {
+            console.log('🔄 Reloading access data...');
+            await checkAccess();
+        }, 1000);
     };
 
     const handleSubscriptionComplete = () => {
+        console.log('💳 Subscription completed! Switching to forecast...');
         setCurrentStep('forecast');
         checkAccess();
     };
