@@ -3,6 +3,7 @@ const OpenAI = require('openai');
 const crypto = require('crypto');
 const moment = require('moment');
 const { getZodiacDescription } = require('./astroService');
+const { sendForecast } = require('../emailService');
 
 // Инициализация OpenAI
 const openai = new OpenAI({
@@ -204,6 +205,14 @@ const generateForecast = async (userId) => {
         }
         
         const profile = profileResult.rows[0];
+        
+        // Получаем email пользователя
+        const userResult = await client.query(
+            'SELECT email FROM users WHERE id = $1',
+            [userId]
+        );
+        const userEmail = userResult.rows[0]?.email;
+        
         const birthChart = typeof profile.birth_chart_data === 'string' 
             ? JSON.parse(profile.birth_chart_data) 
             : profile.birth_chart_data;
@@ -243,12 +252,8 @@ const generateForecast = async (userId) => {
         } else {
             // Генерируем новый прогноз
             try {
-                // Используем AI для GS-III и GS-IV, шаблоны для остальных
-                if (level === 'GS-III' || level === 'GS-IV') {
-                    forecastData = await generateWithAI(profile, birthChart, language, level);
-                } else {
-                    forecastData = generateTemplate(profile, birthChart, language);
-                }
+                // Используем AI для всех уровней
+                forecastData = await generateWithAI(profile, birthChart, language, level);
             } catch (aiError) {
                 console.error('AI generation failed, using template:', aiError);
                 forecastData = generateTemplate(profile, birthChart, language);
@@ -296,6 +301,29 @@ const generateForecast = async (userId) => {
         );
         
         await client.query('COMMIT');
+        
+        // Отправляем email с прогнозом
+        if (userEmail) {
+            try {
+                const emailResult = await sendForecast(
+                    userEmail,
+                    profile.full_name,
+                    forecastData.text,
+                    language
+                );
+                
+                if (emailResult.success) {
+                    await pool.query(
+                        'UPDATE vector_forecasts SET delivery_status = $1, email_sent_at = CURRENT_TIMESTAMP WHERE id = $2',
+                        ['sent', forecastResult.rows[0].id]
+                    );
+                    console.log(`✅ Forecast email sent to ${userEmail}`);
+                }
+            } catch (emailError) {
+                console.error('📧 Email sending failed:', emailError);
+                // Не критично - прогноз уже создан
+            }
+        }
         
         return {
             success: true,

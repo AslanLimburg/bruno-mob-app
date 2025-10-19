@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { initGA, trackPageView } from './analytics';
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./components/auth/Login";
 import SignUp from "./components/auth/SignUp";
@@ -71,6 +72,17 @@ const Notification = ({ type, message, onClose }) => (
 
 function AppContent() {
   const [notifications, setNotifications] = useState([]);
+  const location = useLocation();
+
+  // Инициализация Google Analytics при загрузке
+  useEffect(() => {
+    initGA();
+  }, []);
+
+  // Отслеживание смены страниц
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
 
   const addNotification = (type, message) => {
     const id = Date.now();

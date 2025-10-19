@@ -44,7 +44,8 @@ const VectorSurvey = ({ membershipLevel, onComplete }) => {
                 '中文 🇨🇳': 'zh',
                 'हिंदी 🇮🇳': 'hi',
                 'Français 🇫🇷': 'fr',
-                'Deutsch 🇩🇪': 'de'
+                'Deutsch 🇩🇪': 'de',
+                'Other (specify) 🌍': answers.custom_language || 'en'
             };
             
             // Формируем данные профиля
@@ -85,6 +86,11 @@ const VectorSurvey = ({ membershipLevel, onComplete }) => {
     };
 
     const renderQuestion = (question) => {
+        // Если это custom_language и не выбран Other - скрыть
+        if (question.question_key === 'custom_language' && answers.preferred_language !== 'Other (specify) 🌍') {
+            return null;
+        }
+
         switch (question.question_type) {
             case 'text':
             case 'date':
@@ -96,6 +102,7 @@ const VectorSurvey = ({ membershipLevel, onComplete }) => {
                         value={answers[question.question_key] || ''}
                         onChange={(e) => handleAnswer(question.question_key, e.target.value)}
                         required={question.is_required}
+                        placeholder={question.question_key === 'custom_language' ? 'e.g., Portuguese, Japanese, Turkish...' : ''}
                     />
                 );
             
