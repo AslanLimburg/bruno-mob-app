@@ -1,7 +1,8 @@
 .dashboard-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0d2138 0%, #1d2e4a 100%);
+  background: #0a1929;
   padding: 20px;
+  color: #fff;
 }
 
 .dashboard-header {
@@ -115,19 +116,37 @@
   font-size: 18px;
 }
 
+/* USER INFO STYLES - ЕДИНСТВЕННЫЙ БЛОК */
 .user-info {
-  background: #1d2e4a;
-  padding: 25px;
+  text-align: right;
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #00ffff;
   border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
 }
 
-.user-info p {
-  color: #94A3B8;
-  margin: 10px 0;
+.user-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffff00 !important;
+  text-shadow: 0 0 10px #ffff00;
 }
 
-.user-info strong {
-  color: #FFA726;
+.user-email {
+  font-size: 16px;
+  color: #ffffff !important;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin: 5px 0;
+}
+
+.user-id {
+  font-size: 12px;
+  color: #ffff00 !important;
+  font-family: 'Monaco', monospace;
+  font-weight: bold;
+  text-shadow: 0 0 10px #ffff00;
 }
 
 .balances-grid {
@@ -163,6 +182,10 @@
   background: #1d2e4a;
   padding: 10px;
   border-radius: 12px;
+}
+
+.tabs-row-2 {
+  margin-top: 10px;
 }
 
 .tab {
@@ -423,7 +446,7 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Shop Section Styles */
+/* Shop Section */
 .shop-section {
   background: #1d2e4a;
   padding: 30px;
@@ -644,7 +667,7 @@
   border: none;
 }
 
-/* Coupons Section Styles */
+/* Coupons Section */
 .coupons-section {
   background: #1d2e4a;
   padding: 30px;
@@ -811,7 +834,104 @@
   font-weight: 600;
 }
 
-/* Lottery Section Styles */
+.coupon-redeem-section {
+  background: #0d2138;
+  padding: 30px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+
+.coupon-redeem-section h4 {
+  color: #FFA726;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.coupon-input-group {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.btn-redeem {
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
+  border: none;
+  border-radius: 8px;
+  color: #0A1929;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-redeem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 167, 38, 0.4);
+}
+
+.coupon-info {
+  color: #94A3B8;
+  font-size: 14px;
+}
+
+.coupons-list {
+  display: grid;
+  gap: 15px;
+}
+
+.coupon-card.used {
+  opacity: 0.5;
+}
+
+.coupon-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.coupon-badge.bonus {
+  background: #4CAF50;
+  color: white;
+}
+
+.coupon-badge.discount {
+  background: #2196F3;
+  color: white;
+}
+
+.coupon-badge.used-badge {
+  background: #757575;
+  color: white;
+}
+
+.coupon-code-text {
+  font-size: 28px;
+  font-weight: bold;
+  color: #FFA726;
+  font-family: monospace;
+  margin-bottom: 15px;
+  letter-spacing: 2px;
+}
+
+.coupon-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.coupon-value {
+  color: #4CAF50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Lottery Section */
 .lottery-section {
   background: #1d2e4a;
   padding: 30px;
@@ -821,418 +941,15 @@
 
 .lottery-section h3 {
   color: #FFA726;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   font-size: 28px;
   text-align: center;
-}
-
-.lottery-jackpot {
-  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
-  border-radius: 20px;
-  padding: 40px;
-  text-align: center;
-  margin-bottom: 40px;
-  box-shadow: 0 10px 40px rgba(255, 167, 38, 0.3);
-}
-
-.jackpot-label {
-  color: #0A1929;
-  font-size: 18px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 15px;
-}
-
-.jackpot-amount {
-  color: #0A1929;
-  font-size: 56px;
-  font-weight: bold;
-  margin: 15px 0;
-}
-
-.jackpot-usd {
-  color: rgba(10, 25, 41, 0.8);
-  font-size: 24px;
-  font-weight: 500;
-}
-
-.lottery-buy-section {
-  background: #0d2138;
-  padding: 30px;
-  border-radius: 16px;
-  margin-bottom: 40px;
-}
-
-.lottery-buy-section h4 {
-  color: #FFA726;
-  font-size: 22px;
-  margin-bottom: 15px;
-}
-
-.lottery-info {
-  color: #94A3B8;
-  margin-bottom: 25px;
-}
-
-.ticket-selector {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 25px;
-}
-
-.btn-ticket-change {
-  width: 50px;
-  height: 50px;
-  background: #2d3e5a;
-  border: 2px solid #FFA726;
-  border-radius: 10px;
-  color: #FFA726;
-  font-size: 24px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-ticket-change:hover {
-  background: #FFA726;
-  color: #0A1929;
-  transform: scale(1.1);
-}
-
-.ticket-input {
-  width: 100px;
-  height: 50px;
-  background: #1d2e4a;
-  border: 2px solid #2d3e5a;
-  border-radius: 10px;
-  color: #FFF;
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-  transition: border 0.3s;
-}
-
-.ticket-input:focus {
-  outline: none;
-  border-color: #FFA726;
-}
-
-.btn-buy-tickets {
-  width: 100%;
-  padding: 18px;
-  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
-  border: none;
-  border-radius: 12px;
-  color: #0A1929;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-buy-tickets:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(255, 167, 38, 0.4);
-}
-
-.lottery-history {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
 }
 
 .lottery-section h4 {
   color: #FFA726;
   font-size: 20px;
   margin: 30px 0 20px 0;
-}
-
-.lottery-draw-item {
-  background: #0d2138;
-  padding: 25px;
-  border-radius: 12px;
-  display: grid;
-  grid-template-columns: 2fr 1fr 2fr;
-  gap: 20px;
-  align-items: center;
-  border: 1px solid #2d3e5a;
-  transition: all 0.3s;
-}
-
-.lottery-draw-item:hover {
-  border-color: #FFA726;
-  transform: translateX(5px);
-}
-
-.draw-info {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.draw-name {
-  color: #FFA726;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.draw-date {
-  color: #94A3B8;
-  font-size: 14px;
-}
-
-.draw-jackpot {
-  color: #4CAF50;
-  font-size: 20px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.draw-winner {
-  color: #94A3B8;
-  font-size: 16px;
-  text-align: right;
-  font-family: monospace;
-}
-
-/* Messenger Styles */
-.messenger-section {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 20px;
-  height: 600px;
-  margin-top: 20px;
-}
-
-.messenger-sidebar {
-  background: #1d2e4a;
-  border-radius: 12px;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.messenger-sidebar h3 {
-  color: #FFA726;
-  margin-bottom: 20px;
-  font-size: 20px;
-}
-
-.contacts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px;
-  background: #0d2138;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 2px solid transparent;
-}
-
-.contact-item:hover, .contact-item.active {
-  background: #2d3e5a;
-  border-color: #FFA726;
-}
-
-.contact-avatar {
-  font-size: 32px;
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1d2e4a;
-  border-radius: 50%;
-}
-
-.contact-info {
-  flex: 1;
-}
-
-.contact-name {
-  color: #FFF;
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.contact-status {
-  font-size: 12px;
-  text-transform: capitalize;
-}
-
-.contact-status.online {
-  color: #4CAF50;
-}
-
-.contact-status.offline {
-  color: #94A3B8;
-}
-
-.messenger-main {
-  background: #1d2e4a;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 20px;
-  border-bottom: 1px solid #2d3e5a;
-}
-
-.chat-avatar {
-  font-size: 36px;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0d2138;
-  border-radius: 50%;
-}
-
-.chat-info {
-  flex: 1;
-}
-
-.chat-name {
-  color: #FFF;
-  font-weight: 600;
-  font-size: 18px;
-  margin-bottom: 5px;
-}
-
-.chat-status {
-  font-size: 13px;
-  text-transform: capitalize;
-}
-
-.chat-status.online {
-  color: #4CAF50;
-}
-
-.chat-status.offline {
-  color: #94A3B8;
-}
-
-.messages-list {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.message {
-  display: flex;
-  max-width: 70%;
-}
-
-.message-me {
-  align-self: flex-end;
-}
-
-.message-them {
-  align-self: flex-start;
-}
-
-.message-content {
-  background: #0d2138;
-  padding: 12px 16px;
-  border-radius: 12px;
-  max-width: 100%;
-}
-
-.message-me .message-content {
-  background: #FFA726;
-  color: #0A1929;
-}
-
-.message-text {
-  margin-bottom: 5px;
-  word-wrap: break-word;
-}
-
-.message-time {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-.message-me .message-time {
-  text-align: right;
-  color: rgba(10, 25, 41, 0.7);
-}
-
-.message-them .message-time {
-  color: #94A3B8;
-}
-
-.message-input-area {
-  display: flex;
-  gap: 15px;
-  padding: 20px;
-  border-top: 1px solid #2d3e5a;
-}
-
-.message-input {
-  flex: 1;
-  padding: 14px 16px;
-  background: #0d2138;
-  border: 2px solid #2d3e5a;
-  border-radius: 8px;
-  color: #FFF;
-  font-size: 15px;
-  transition: border 0.3s;
-}
-
-.message-input:focus {
-  outline: none;
-  border-color: #FFA726;
-}
-
-.btn-send-message {
-  padding: 14px 30px;
-  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
-  border: none;
-  border-radius: 8px;
-  color: #0A1929;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-send-message:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 167, 38, 0.4);
-}
-
-/* Lottery Section Styles */
-.lottery-section {
-  background: #1d2e4a;
-  padding: 30px;
-  border-radius: 12px;
-  margin-top: 20px;
-}
-
-.lottery-section h3 {
-  color: #FFA726;
-  margin-bottom: 25px;
-  font-size: 28px;
-  text-align: center;
 }
 
 .lottery-jackpot {
@@ -1401,155 +1118,283 @@
   font-size: 14px;
 }
 
-/* Coupons Section Styles */
-.coupons-section {
+/* Overview Section */
+.overview-section {
+  display: grid;
+  gap: 20px;
+}
+
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.overview-card {
   background: #1d2e4a;
-  padding: 30px;
+  padding: 25px;
   border-radius: 12px;
+  border: 1px solid #2d3e5a;
+  transition: all 0.3s;
+}
+
+.overview-card:hover {
+  border-color: #FFA726;
+  transform: translateY(-5px);
+}
+
+.overview-card-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.overview-icon {
+  font-size: 32px;
+}
+
+.overview-card-title {
+  color: #94A3B8;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.overview-card-value {
+  font-size: 32px;
+  color: #FFA726;
+  font-weight: bold;
+}
+
+.overview-card-subtitle {
+  color: #64748B;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+/* Messenger Section */
+.messenger-section {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  height: 600px;
   margin-top: 20px;
 }
 
-.coupons-section h3 {
-  color: #FFA726;
-  margin-bottom: 25px;
-  font-size: 24px;
-}
-
-.coupon-redeem-section {
-  background: #0d2138;
-  padding: 30px;
+.messenger-sidebar {
+  background: #1d2e4a;
   border-radius: 12px;
-  margin-bottom: 30px;
+  padding: 20px;
+  overflow-y: auto;
 }
 
-.coupon-redeem-section h4 {
+.messenger-sidebar h3 {
   color: #FFA726;
   margin-bottom: 20px;
   font-size: 20px;
 }
 
-.coupon-input-group {
+.contacts-list {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
   gap: 15px;
-  margin-bottom: 15px;
-}
-
-.coupon-input {
-  flex: 1;
   padding: 15px;
-  background: #1d2e4a;
-  border: 2px solid #2d3e5a;
-  border-radius: 8px;
-  color: #FFF;
-  font-size: 16px;
-  font-family: monospace;
-  text-transform: uppercase;
-  outline: none;
+  background: #0d2138;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
 }
 
-.coupon-input:focus {
+.contact-item:hover, .contact-item.active {
+  background: #2d3e5a;
   border-color: #FFA726;
 }
 
-.btn-redeem {
-  padding: 15px 30px;
+.contact-avatar {
+  font-size: 32px;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1d2e4a;
+  border-radius: 50%;
+}
+
+.contact-info {
+  flex: 1;
+}
+
+.contact-name {
+  color: #FFF;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.contact-status {
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.contact-status.online {
+  color: #4CAF50;
+}
+
+.contact-status.offline {
+  color: #94A3B8;
+}
+
+.messenger-main {
+  background: #1d2e4a;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border-bottom: 1px solid #2d3e5a;
+}
+
+.chat-avatar {
+  font-size: 36px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d2138;
+  border-radius: 50%;
+}
+
+.chat-info {
+  flex: 1;
+}
+
+.chat-name {
+  color: #FFF;
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.chat-status {
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.chat-status.online {
+  color: #4CAF50;
+}
+
+.chat-status.offline {
+  color: #94A3B8;
+}
+
+.messages-list {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message {
+  display: flex;
+  max-width: 70%;
+}
+
+.message-me {
+  align-self: flex-end;
+}
+
+.message-them {
+  align-self: flex-start;
+}
+
+.message-content {
+  background: #0d2138;
+  padding: 12px 16px;
+  border-radius: 12px;
+  max-width: 100%;
+}
+
+.message-me .message-content {
+  background: #FFA726;
+  color: #0A1929;
+}
+
+.message-text {
+  margin-bottom: 5px;
+  word-wrap: break-word;
+}
+
+.message-time {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.message-me .message-time {
+  text-align: right;
+  color: rgba(10, 25, 41, 0.7);
+}
+
+.message-them .message-time {
+  color: #94A3B8;
+}
+
+.message-input-area {
+  display: flex;
+  gap: 15px;
+  padding: 20px;
+  border-top: 1px solid #2d3e5a;
+}
+
+.message-input {
+  flex: 1;
+  padding: 14px 16px;
+  background: #0d2138;
+  border: 2px solid #2d3e5a;
+  border-radius: 8px;
+  color: #FFF;
+  font-size: 15px;
+  transition: border 0.3s;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: #FFA726;
+}
+
+.btn-send-message {
+  padding: 14px 30px;
   background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
   border: none;
   border-radius: 8px;
   color: #0A1929;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
 }
 
-.btn-redeem:hover {
+.btn-send-message:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 167, 38, 0.4);
+  box-shadow: 0 4px 15px rgba(255, 167, 38, 0.4);
 }
 
-.coupon-info {
-  color: #94A3B8;
-  font-size: 14px;
-}
-
-.coupons-list {
-  display: grid;
-  gap: 15px;
-}
-
-.coupon-card {
-  background: #0d2138;
-  border-radius: 12px;
-  padding: 25px;
-  border: 2px solid #2d3e5a;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-
-.coupon-card.used {
-  opacity: 0.5;
-}
-
-.coupon-card:hover:not(.used) {
-  border-color: #FFA726;
-  transform: translateY(-5px);
-}
-
-.coupon-badge {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.coupon-badge.bonus {
-  background: #4CAF50;
-  color: white;
-}
-
-.coupon-badge.discount {
-  background: #2196F3;
-  color: white;
-}
-
-.coupon-badge.used-badge {
-  background: #757575;
-  color: white;
-}
-
-.coupon-code-text {
-  font-size: 28px;
-  font-weight: bold;
-  color: #FFA726;
-  font-family: monospace;
-  margin-bottom: 15px;
-  letter-spacing: 2px;
-}
-
-.coupon-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 15px;
-}
-
-.coupon-value {
-  color: #4CAF50;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.coupon-expires {
-  color: #94A3B8;
-  font-size: 14px;
-}
-
-/* Messenger Styles */
 .messenger-button {
   position: fixed;
   bottom: 30px;
@@ -1693,12 +1538,6 @@
   border-bottom-left-radius: 4px;
 }
 
-.message-time {
-  font-size: 11px;
-  color: #64748B;
-  margin-top: 5px;
-}
-
 .messenger-input-area {
   padding: 15px;
   background: #1d2e4a;
@@ -1722,520 +1561,6 @@
   border-color: #FFA726;
 }
 
-.btn-send-message {
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
-  border: none;
-  border-radius: 8px;
-  color: #0A1929;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-send-message:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 167, 38, 0.4);
-}
-
-/* Overview Section */
-.overview-section {
-  display: grid;
-  gap: 20px;
-}
-
-.overview-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 15px;
-}
-
-.overview-card {
-  background: #1d2e4a;
-  padding: 25px;
-  border-radius: 12px;
-  border: 1px solid #2d3e5a;
-  transition: all 0.3s;
-}
-
-.overview-card:hover {
-  border-color: #FFA726;
-  transform: translateY(-5px);
-}
-
-.overview-card-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.overview-icon {
-  font-size: 32px;
-}
-
-.overview-card-title {
-  color: #94A3B8;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.overview-card-value {
-  font-size: 32px;
-  color: #FFA726;
-  font-weight: bold;
-}
-
-.overview-card-subtitle {
-  color: #64748B;
-  font-size: 14px;
-  margin-top: 5px;
-}
-
-/* Messenger Styles */
-.messenger-section {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 20px;
-  height: 600px;
-  margin-top: 20px;
-}
-
-.messenger-sidebar {
-  background: #1d2e4a;
-  border-radius: 12px;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.messenger-sidebar h3 {
-  color: #FFA726;
-  margin-bottom: 20px;
-  font-size: 20px;
-}
-
-.contacts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px;
-  background: #0d2138;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 2px solid transparent;
-}
-
-.contact-item:hover, .contact-item.active {
-  background: #2d3e5a;
-  border-color: #FFA726;
-}
-
-.contact-avatar {
-  font-size: 32px;
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1d2e4a;
-  border-radius: 50%;
-}
-
-.contact-info {
-  flex: 1;
-}
-
-.contact-name {
-  color: #FFF;
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.contact-status {
-  font-size: 12px;
-  text-transform: capitalize;
-}
-
-.contact-status.online {
-  color: #4CAF50;
-}
-
-.contact-status.offline {
-  color: #94A3B8;
-}
-
-.messenger-main {
-  background: #1d2e4a;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 20px;
-  border-bottom: 1px solid #2d3e5a;
-}
-
-.chat-avatar {
-  font-size: 36px;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0d2138;
-  border-radius: 50%;
-}
-
-.chat-info {
-  flex: 1;
-}
-
-.chat-name {
-  color: #FFF;
-  font-weight: 600;
-  font-size: 18px;
-  margin-bottom: 5px;
-}
-
-.chat-status {
-  font-size: 13px;
-  text-transform: capitalize;
-}
-
-.chat-status.online {
-  color: #4CAF50;
-}
-
-.chat-status.offline {
-  color: #94A3B8;
-}
-
-.messages-list {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.message {
-  display: flex;
-  max-width: 70%;
-}
-
-.message-me {
-  align-self: flex-end;
-}
-
-.message-them {
-  align-self: flex-start;
-}
-
-.message-content {
-  background: #0d2138;
-  padding: 12px 16px;
-  border-radius: 12px;
-  max-width: 100%;
-}
-
-.message-me .message-content {
-  background: #FFA726;
-  color: #0A1929;
-}
-
-.message-text {
-  margin-bottom: 5px;
-  word-wrap: break-word;
-}
-
-.message-time {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-.message-me .message-time {
-  text-align: right;
-  color: rgba(10, 25, 41, 0.7);
-}
-
-.message-them .message-time {
-  color: #94A3B8;
-}
-
-.message-input-area {
-  display: flex;
-  gap: 15px;
-  padding: 20px;
-  border-top: 1px solid #2d3e5a;
-}
-
-.message-input {
-  flex: 1;
-  padding: 14px 16px;
-  background: #0d2138;
-  border: 2px solid #2d3e5a;
-  border-radius: 8px;
-  color: #FFF;
-  font-size: 15px;
-  transition: border 0.3s;
-}
-
-.message-input:focus {
-  outline: none;
-  border-color: #FFA726;
-}
-
-.btn-send-message {
-  padding: 14px 30px;
-  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
-  border: none;
-  border-radius: 8px;
-  color: #0A1929;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-send-message:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 167, 38, 0.4);
-}
-
-/* Messenger Styles */
-.messenger-section {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 20px;
-  height: 600px;
-  margin-top: 20px;
-}
-
-.messenger-sidebar {
-  background: #1d2e4a;
-  border-radius: 12px;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.messenger-sidebar h3 {
-  color: #FFA726;
-  margin-bottom: 20px;
-  font-size: 20px;
-}
-
-.contacts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px;
-  background: #0d2138;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s;
-  border: 2px solid transparent;
-}
-
-.contact-item:hover, .contact-item.active {
-  background: #2d3e5a;
-  border-color: #FFA726;
-}
-
-.contact-avatar {
-  font-size: 32px;
-  width: 45px;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1d2e4a;
-  border-radius: 50%;
-}
-
-.contact-info {
-  flex: 1;
-}
-
-.contact-name {
-  color: #FFF;
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.contact-status {
-  font-size: 12px;
-  text-transform: capitalize;
-}
-
-.contact-status.online {
-  color: #4CAF50;
-}
-
-.contact-status.offline {
-  color: #94A3B8;
-}
-
-.messenger-main {
-  background: #1d2e4a;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 20px;
-  border-bottom: 1px solid #2d3e5a;
-}
-
-.chat-avatar {
-  font-size: 36px;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0d2138;
-  border-radius: 50%;
-}
-
-.chat-info {
-  flex: 1;
-}
-
-.chat-name {
-  color: #FFF;
-  font-weight: 600;
-  font-size: 18px;
-  margin-bottom: 5px;
-}
-
-.chat-status {
-  font-size: 13px;
-  text-transform: capitalize;
-}
-
-.chat-status.online {
-  color: #4CAF50;
-}
-
-.chat-status.offline {
-  color: #94A3B8;
-}
-
-.messages-list {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.message {
-  display: flex;
-  max-width: 70%;
-}
-
-.message-me {
-  align-self: flex-end;
-}
-
-.message-them {
-  align-self: flex-start;
-}
-
-.message-content {
-  background: #0d2138;
-  padding: 12px 16px;
-  border-radius: 12px;
-  max-width: 100%;
-}
-
-.message-me .message-content {
-  background: #FFA726;
-  color: #0A1929;
-}
-
-.message-text {
-  margin-bottom: 5px;
-  word-wrap: break-word;
-}
-
-.message-time {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-.message-me .message-time {
-  text-align: right;
-  color: rgba(10, 25, 41, 0.7);
-}
-
-.message-them .message-time {
-  color: #94A3B8;
-}
-
-.message-input-area {
-  display: flex;
-  gap: 15px;
-  padding: 20px;
-  border-top: 1px solid #2d3e5a;
-}
-
-.message-input {
-  flex: 1;
-  padding: 14px 16px;
-  background: #0d2138;
-  border: 2px solid #2d3e5a;
-  border-radius: 8px;
-  color: #FFF;
-  font-size: 15px;
-  transition: border 0.3s;
-}
-
-.message-input:focus {
-  outline: none;
-  border-color: #FFA726;
-}
-
-.btn-send-message {
-  padding: 14px 30px;
-  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
-  border: none;
-  border-radius: 8px;
-  color: #0A1929;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.btn-send-message:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 167, 38, 0.4);
-}
 /* Challenge Button */
 .challenge-button {
   margin-top: 20px;
@@ -2271,47 +1596,8 @@
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.9);
 }
-/* User Info в header - яркий бирюзовый */
-.user-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  margin-right: 15px;
-  margin-left: auto;
-  padding: 10px 20px;
-  background: rgba(0, 206, 209, 0.15);
-  border-radius: 10px;
-  border: 2px solid #00CED1;
-}
 
-.user-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: #00CED1;
-  text-shadow: 0 0 10px rgba(0, 206, 209, 0.3);
-}
-
-.user-email {
-  font-size: 15px;
-  color: #00CED1;
-  font-weight: 500;
-  margin-top: 2px;
-}
-
-.user-id {
-  font-size: 13px;
-  color: #00CED1;
-  font-family: monospace;
-  font-weight: 600;
-  margin-top: 2px;
-}
-
-/* Вторая строка кнопок */
-.tabs-row-2 {
-  margin-top: 10px;
-}
-
-/* Placeholder для Star Challenge */
+/* Star Challenge Placeholder */
 .star-challenge-placeholder {
   text-align: center;
   padding: 100px 20px;
@@ -2329,6 +1615,7 @@
   font-size: 18px;
   margin: 10px 0;
 }
+
 /* Vector of Destiny Banner */
 .vector-destiny-banner {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

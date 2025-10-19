@@ -12,22 +12,10 @@ import Messenger from '../messenger/Messenger';
 import StarsChallenge from '../stars-challenge/StarsChallenge';
 import { useNavigate } from 'react-router-dom';
 
-// Mock Data
-const mockTransactions = [
-  {id:1,type:"receive",crypto:"BRT",amount:1500,status:"completed",date:"2025-10-07 14:30",from:"0x7a2...4f9"},
-  {id:2,type:"send",crypto:"BRT",amount:250,status:"completed",date:"2025-10-06 09:15",to:"0x8b3...5e1"},
-  {id:3,type:"swap",crypto:"BRT→USDT",amount:500,status:"pending",date:"2025-10-05 18:45",from:"Swap"},
-];
-
 const mockCoupons = [
   {id:1,code:"WELCOME100",discount:"100 BRT",type:"bonus",expires:"2025-12-31",used:false},
   {id:2,code:"SAVE20",discount:"20%",type:"discount",expires:"2025-11-30",used:false},
   {id:3,code:"VIP500",discount:"500 BRT",type:"bonus",expires:"2025-10-15",used:true},
-];
-
-const mockLottery = [
-  {id:1,draw:"Weekly #42",date:"2025-10-14",jackpot:"50,000 BRT",winner:"0x7a2...4f9"},
-  {id:2,draw:"Weekly #41",date:"2025-10-07",jackpot:"45,000 BRT",winner:"0x3c1...8a7"},
 ];
 
 const mockReferrals = [
@@ -44,11 +32,13 @@ const Dashboard = ({addNotification}) => {
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [ticketCount, setTicketCount] = useState(1);
+  const [transactions, setTransactions] = useState([]);
+  const [loadingTransactions, setLoadingTransactions] = useState(true);
   
   const totalBalance = typeof user?.balances?.BRT === 'number' ? user.balances.BRT : 0;
   const referralCode = user?.referralCode || "BRT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
   
-  // Listener для переключения вкладки из других компонентов (например, ClubAvalanche)
+  // Listener для переключения вкладки
   useEffect(() => {
     const handleTabSwitch = (event) => {
       setActiveTab(event.detail);
@@ -61,13 +51,48 @@ const Dashboard = ({addNotification}) => {
     };
   }, []);
   
-  // Проверка сообщения для BrunoChat при загрузке
+  // Проверка сообщения для BrunoChat
   useEffect(() => {
     const shareMessage = localStorage.getItem('brunoChat_shareMessage');
     if (shareMessage && activeTab === 'messenger') {
       // Сообщение будет обработано в компоненте Messenger
     }
   }, [activeTab]);
+  
+  // Загрузить транзакции
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/wallet/transactions`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          const formattedTx = data.data.map(t => ({
+            id: t.id,
+            type: t.from_user_id === user?.id ? 'send' : 'receive',
+            crypto: t.crypto,
+            amount: parseFloat(t.amount),
+            status: t.status,
+            date: new Date(t.created_at).toLocaleString(),
+            from: t.from_email || 'System',
+            to: t.to_email || 'System'
+          }));
+          setTransactions(formattedTx);
+        }
+      } catch (error) {
+        console.error('Failed to load transactions:', error);
+      } finally {
+        setLoadingTransactions(false);
+      }
+    };
+    
+    if (user?.id) {
+      fetchTransactions();
+    }
+  }, [user?.id]);
   
   const handleRedeemCoupon = () => {
     if (!couponCode) {
@@ -100,7 +125,6 @@ const Dashboard = ({addNotification}) => {
       {/* Header with Logo and User Info */}
       <div className="dashboard-header">
         <div className="dashboard-logo">
-          {/* Новый лого - замени src на путь к твоему новому лого */}
           <img src="/images/logo-new.png" alt="Bruno Token Logo" className="logo-icon" 
                onError={(e) => e.target.src = "/images/logo.png"} />
           <div className="logo-text">
@@ -132,7 +156,7 @@ const Dashboard = ({addNotification}) => {
           <div className="balance-subtitle">≈ ${(totalBalance * 0.1).toLocaleString()} USD</div>
         </div>
         
-        {/* Vector of Destiny Button - ГЛАВНЫЙ БАННЕР */}
+        {/* Vector of Destiny Button */}
         <div className="vector-destiny-banner" onClick={() => navigate('/vector-destiny')}>
           <div className="vector-banner-content">
             <div className="vector-icon">✨</div>
@@ -182,7 +206,7 @@ const Dashboard = ({addNotification}) => {
                   <span className="overview-icon">📊</span>
                   <span className="overview-card-title">Total Transactions</span>
                 </div>
-                <div className="overview-card-value">{mockTransactions.length}</div>
+                <div className="overview-card-value">{transactions.length}</div>
                 <div className="overview-card-subtitle">All time</div>
               </div>
               
@@ -208,29 +232,42 @@ const Dashboard = ({addNotification}) => {
             {/* Recent Activity */}
             <div className="transactions-section">
               <h3>Recent Activity</h3>
-              <div className="transactions-list">
-                {mockTransactions.slice(0, 3).map(tx => (
-                  <div key={tx.id} className="transaction-item">
-                    <div className="tx-icon" style={{background: tx.type==="receive"?"#4CAF50":tx.type==="send"?"#FF5252":"#2196F3"}}>
-                      {tx.type==="receive"?"↓":tx.type==="send"?"↑":"⇄"}
-                    </div>
-                    <div className="tx-details">
-                      <div className="tx-main">
-                        <span className="tx-type">{tx.type.charAt(0).toUpperCase()+tx.type.slice(1)}</span>
-                        <span className="tx-crypto">{tx.crypto}</span>
+              {loadingTransactions ? (
+                <div className="empty-state">Loading transactions...</div>
+              ) : transactions.length === 0 ? (
+                <div className="empty-state">
+                  <div style={{fontSize: '48px', marginBottom: '20px'}}>📋</div>
+                  <div>No transactions yet</div>
+                </div>
+              ) : (
+                <div className="transactions-list">
+                  {transactions.slice(0, 5).map(tx => (
+                    <div key={tx.id} className="transaction-item">
+                      <div className="tx-icon" style={{background: tx.type==="receive"?"#4CAF50":"#FF5252"}}>
+                        {tx.type==="receive"?"↓":"↑"}
                       </div>
-                      <div className="tx-meta">
-                        <span className="tx-date">{tx.date}</span>
-                        <span className="tx-address">{tx.from || tx.to || tx.crypto}</span>
+                      <div className="tx-details">
+                        <div className="tx-main">
+                          <span className="tx-type">{tx.type.charAt(0).toUpperCase()+tx.type.slice(1)}</span>
+                          <span className="tx-crypto">{tx.crypto}</span>
+                        </div>
+                        <div className="tx-meta">
+                          <span className="tx-date">{tx.date}</span>
+                          <span className="tx-address">{tx.type==="send"?`To: ${tx.to}`:`From: ${tx.from}`}</span>
+                        </div>
+                      </div>
+                      <div className="tx-amount-status">
+                        <span className="tx-amount" style={{color: tx.type==="send"?"#FF5252":"#4CAF50"}}>
+                          {tx.type==="send"?"-":"+"}{tx.amount.toFixed(2)}
+                        </span>
+                        <span className="tx-status" style={{background: tx.status==="completed"?"#4CAF50":"#FFA726"}}>
+                          {tx.status}
+                        </span>
                       </div>
                     </div>
-                    <div className="tx-amount-status">
-                      <span className="tx-amount">{tx.type==="send"?"-":"+"}{tx.amount}</span>
-                      <span className="tx-status" style={{color: tx.status==="completed"?"#4CAF50":"#FFA726"}}>{tx.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -364,34 +401,51 @@ const Dashboard = ({addNotification}) => {
         )}
         
         {activeTab==="lottery" && <Lottery />}
+        
+        {/* Transactions Tab */}
         {activeTab==="transactions" && (
           <div className="transactions-section">
             <h3>Transaction History</h3>
-            <div className="transactions-list">
-              {mockTransactions.map(tx => (
-                <div key={tx.id} className="transaction-item">
-                  <div className="tx-icon" style={{background: tx.type==="receive"?"#4CAF50":tx.type==="send"?"#FF5252":"#2196F3"}}>
-                    {tx.type==="receive"?"↓":tx.type==="send"?"↑":"⇄"}
-                  </div>
-                  <div className="tx-details">
-                    <div className="tx-main">
-                      <span className="tx-type">{tx.type.charAt(0).toUpperCase()+tx.type.slice(1)}</span>
-                      <span className="tx-crypto">{tx.crypto}</span>
+            {loadingTransactions ? (
+              <div className="empty-state">Loading transactions...</div>
+            ) : transactions.length === 0 ? (
+              <div className="empty-state">
+                <div style={{fontSize: '48px', marginBottom: '20px'}}>📋</div>
+                <div>No transactions yet</div>
+                <div className="empty-subtitle">Your transaction history will appear here</div>
+              </div>
+            ) : (
+              <div className="transactions-list">
+                {transactions.map(tx => (
+                  <div key={tx.id} className="transaction-item">
+                    <div className="tx-icon" style={{background: tx.type==="receive"?"#4CAF50":"#FF5252"}}>
+                      {tx.type==="receive"?"↓":"↑"}
                     </div>
-                    <div className="tx-meta">
-                      <span className="tx-date">{tx.date}</span>
-                      <span className="tx-address">{tx.from || tx.to || "Internal"}</span>
+                    <div className="tx-details">
+                      <div className="tx-main">
+                        <span className="tx-type">{tx.type.charAt(0).toUpperCase()+tx.type.slice(1)}</span>
+                        <span className="tx-crypto">{tx.crypto}</span>
+                      </div>
+                      <div className="tx-meta">
+                        <span className="tx-date">{tx.date}</span>
+                        <span className="tx-address">{tx.type==="send"?`To: ${tx.to}`:`From: ${tx.from}`}</span>
+                      </div>
+                    </div>
+                    <div className="tx-amount-status">
+                      <span className="tx-amount" style={{color: tx.type==="send"?"#FF5252":"#4CAF50"}}>
+                        {tx.type==="send"?"-":"+"}{tx.amount.toFixed(2)} {tx.crypto}
+                      </span>
+                      <span className="tx-status" style={{background: tx.status==="completed"?"#4CAF50":"#FFA726"}}>
+                        {tx.status}
+                      </span>
                     </div>
                   </div>
-                  <div className="tx-amount-status">
-                    <span className="tx-amount">{tx.type==="send"?"-":"+"}{tx.amount}</span>
-                    <span className="tx-status" style={{color: tx.status==="completed"?"#4CAF50":"#FFA726"}}>{tx.status}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
+        
         {activeTab==="club" && <ClubAvalanche />}
         {activeTab==="challenge" && <Challenge />}
         {activeTab==="messenger" && <Messenger />}

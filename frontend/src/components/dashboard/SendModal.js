@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import axios from "axios";
 import "./Modal.css";
 
 const SendModal = ({ isOpen, onClose, balances, addNotification }) => {
-  const [crypto, setCrypto] = useState("BTC");
-  const [address, setAddress] = useState("");
+  const [crypto, setCrypto] = useState("BRT"); // ← ИЗМЕНЕНО с BTC на BRT
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +15,7 @@ const SendModal = ({ isOpen, onClose, balances, addNotification }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!address || !amount) {
+    if (!recipientEmail || !amount) {
       addNotification("error", "Please fill all fields");
       return;
     }
@@ -31,15 +32,33 @@ const SendModal = ({ isOpen, onClose, balances, addNotification }) => {
 
     setLoading(true);
     
-    // Симуляция отправки (позже подключим к API)
-    setTimeout(() => {
-      addNotification("success", `Successfully sent ${amount} ${crypto}`);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/wallet/send`,
+        {
+          recipientEmail,
+          crypto,
+          amount: parseFloat(amount)
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data.success) {
+        addNotification("success", response.data.message);
+        onClose();
+        setRecipientEmail("");
+        setAmount("");
+        // Обновить баланс
+        window.location.reload();
+      }
+    } catch (error) {
+      addNotification("error", error.response?.data?.message || "Failed to send");
+    } finally {
       setLoading(false);
-      onClose();
-      // Сбросить форму
-      setAddress("");
-      setAmount("");
-    }, 2000);
+    }
   };
 
   const handleMaxClick = () => {
@@ -67,12 +86,12 @@ const SendModal = ({ isOpen, onClose, balances, addNotification }) => {
           </div>
 
           <div className="form-group">
-            <label>Recipient Address</label>
+            <label>Recipient Email</label>
             <input
-              type="text"
-              placeholder="Enter wallet address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              type="email"
+              placeholder="Enter recipient's email"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
               required
             />
           </div>

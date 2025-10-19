@@ -153,7 +153,7 @@ const sendForecast = async (userEmail, userName, forecastText, language) => {
         };
         
         const { data, error } = await resend.emails.send({
-            from: 'Vector of Destiny <info@brunotoken.com>',
+            from: 'onboarding@resend.dev',
             to: [userEmail],
             subject: subjects[language] || subjects['en'],
             html: `
@@ -205,7 +205,7 @@ const sendForecast = async (userEmail, userName, forecastText, language) => {
 const sendWelcomeVectorDestiny = async (userEmail, userName) => {
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Vector of Destiny <info@brunotoken.com>',
+            from: 'onboarding@resend.dev',
             to: [userEmail],
             subject: '🎉 Welcome to Vector of Destiny!',
             html: `

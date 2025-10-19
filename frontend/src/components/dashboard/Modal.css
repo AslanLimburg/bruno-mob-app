@@ -340,3 +340,115 @@
   font-weight: 600;
   font-family: monospace;
 }
+/* ======================================
+   RECEIVE MODAL STYLES
+   ====================================== */
+
+.receive-content {
+  padding: 20px 0;
+}
+
+.receive-info {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.receive-info p {
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.receive-address-box {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  border: 2px solid #333;
+}
+
+.receive-label {
+  color: #888;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.receive-address {
+  background: #000000;
+  padding: 15px;
+  border-radius: 8px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: bold;
+  color: #00ff00; /* Яркий неоново-зеленый */
+  word-break: break-all;
+  text-align: center;
+  border: 2px solid #00ff00;
+  margin: 15px 0;
+  text-shadow: 0 0 10px #00ff00;
+}
+
+.btn-copy {
+  width: 100%;
+  padding: 12px;
+  background: #00ff00;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-copy:hover {
+  background: #00cc00;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+.receive-warning {
+  background: #2a1a0a;
+  border-left: 4px solid #ff9800;
+  padding: 12px;
+  margin: 20px 0;
+  color: #ffb74d;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.receive-balances {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #333;
+}
+
+.receive-balances h3 {
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.balance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.balance-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background: #1a1a1a;
+  border-radius: 6px;
+}
+
+.crypto-name {
+  color: #888;
+  font-weight: bold;
+}
+
+.crypto-balance {
+  color: #00ff00;
+  font-family: 'Monaco', monospace;
+}
