@@ -24,7 +24,7 @@ const mockReferrals = [
 ];
 
 const Dashboard = ({addNotification}) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
@@ -34,9 +34,16 @@ const Dashboard = ({addNotification}) => {
   const [ticketCount, setTicketCount] = useState(1);
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [localBalance, setLocalBalance] = useState(0);
   
-  const totalBalance = typeof user?.balances?.BRT === 'number' ? user.balances.BRT : 0;
   const referralCode = user?.referralCode || "BRT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  
+  // Синхронизировать localBalance с user.balances.BRT
+  useEffect(() => {
+    const newBalance = typeof user?.balances?.BRT === 'number' ? user.balances.BRT : 0;
+    console.log('💰 Balance updated:', newBalance);
+    setLocalBalance(newBalance);
+  }, [user?.balances?.BRT]);
   
   // Listener для переключения вкладки
   useEffect(() => {
@@ -59,40 +66,59 @@ const Dashboard = ({addNotification}) => {
     }
   }, [activeTab]);
   
-  // Загрузить транзакции
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/wallet/transactions`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-          const formattedTx = data.data.map(t => ({
-            id: t.id,
-            type: t.from_user_id === user?.id ? 'send' : 'receive',
-            crypto: t.crypto,
-            amount: parseFloat(t.amount),
-            status: t.status,
-            date: new Date(t.created_at).toLocaleString(),
-            from: t.from_email || 'System',
-            to: t.to_email || 'System'
-          }));
-          setTransactions(formattedTx);
-        }
-      } catch (error) {
-        console.error('Failed to load transactions:', error);
-      } finally {
-        setLoadingTransactions(false);
+  // ✅ Функция перезагрузки транзакций
+  const fetchTransactions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/wallet/transactions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        const formattedTx = data.data.map(t => ({
+          id: t.id,
+          type: t.from_user_id === user?.id ? 'send' : 'receive',
+          crypto: t.crypto,
+          amount: parseFloat(t.amount),
+          status: t.status,
+          date: new Date(t.created_at).toLocaleString(),
+          from: t.from_email || 'System',
+          to: t.to_email || 'System'
+        }));
+        setTransactions(formattedTx);
       }
-    };
-    
+    } catch (error) {
+      console.error('Failed to load transactions:', error);
+    } finally {
+      setLoadingTransactions(false);
+    }
+  };
+  
+  // Загрузить транзакции при монтировании
+  useEffect(() => {
     if (user?.id) {
       fetchTransactions();
     }
   }, [user?.id]);
+  
+  // ✅ Коллбек после успешной транзакции
+  const handleTransactionComplete = async () => {
+    console.log('🔄 Transaction completed, refreshing data...');
+    await refreshUser();  // Обновить баланс
+    await fetchTransactions();  // Обновить транзакции
+    console.log('✅ Data refreshed');
+  };
+  
+  // ✅ Автообновление баланса каждые 10 секунд
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      console.log('🔄 Auto-refreshing user data...');
+      await refreshUser();
+    }, 10000); // 10 секунд
+    
+    return () => clearInterval(interval);
+  }, [refreshUser]);
   
   const handleRedeemCoupon = () => {
     if (!couponCode) {
@@ -105,7 +131,7 @@ const Dashboard = ({addNotification}) => {
   
   const handleBuyTickets = () => {
     const cost = ticketCount * 10;
-    if (totalBalance < cost) {
+    if (localBalance < cost) {
       addNotification("error", "Insufficient balance");
       return;
     }
@@ -152,8 +178,8 @@ const Dashboard = ({addNotification}) => {
         {/* Balance Card */}
         <div className="balance-card">
           <h2>Total Balance</h2>
-          <div className="balance-amount">{totalBalance.toLocaleString()} BRT</div>
-          <div className="balance-subtitle">≈ ${(totalBalance * 0.1).toLocaleString()} USD</div>
+          <div className="balance-amount">{localBalance.toLocaleString()} BRT</div>
+          <div className="balance-subtitle">≈ ${(localBalance * 0.1).toLocaleString()} USD</div>
         </div>
         
         {/* Vector of Destiny Button */}
@@ -197,7 +223,7 @@ const Dashboard = ({addNotification}) => {
                   <span className="overview-icon">💰</span>
                   <span className="overview-card-title">Total Balance</span>
                 </div>
-                <div className="overview-card-value">{totalBalance.toLocaleString()}</div>
+                <div className="overview-card-value">{localBalance.toLocaleString()}</div>
                 <div className="overview-card-subtitle">BRT Tokens</div>
               </div>
               
@@ -453,9 +479,15 @@ const Dashboard = ({addNotification}) => {
         {activeTab==="moderator" && <ModeratorDashboard />}
       </div>
       
-      <SendModal isOpen={isSendModalOpen} onClose={()=>setIsSendModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
-      <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification} user={user}/>  
-      <SwapModal isOpen={isSwapModalOpen} onClose={()=>setIsSwapModalOpen(false)} balances={{BRT:totalBalance}} addNotification={addNotification}/>
+      <SendModal 
+        isOpen={isSendModalOpen} 
+        onClose={()=>setIsSendModalOpen(false)} 
+        balances={{BRT:localBalance}} 
+        addNotification={addNotification}
+        onTransactionComplete={handleTransactionComplete}
+      />
+      <ReceiveModal isOpen={isReceiveModalOpen} onClose={()=>setIsReceiveModalOpen(false)} balances={{BRT:localBalance}} addNotification={addNotification} user={user}/>  
+      <SwapModal isOpen={isSwapModalOpen} onClose={()=>setIsSwapModalOpen(false)} balances={{BRT:localBalance}} addNotification={addNotification}/>
     </div>
   );
 };

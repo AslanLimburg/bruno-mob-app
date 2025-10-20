@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./Modal.css";
 
-const SendModal = ({ isOpen, onClose, balances, addNotification }) => {
-  const [crypto, setCrypto] = useState("BRT"); // ← ИЗМЕНЕНО с BTC на BRT
+const SendModal = ({ isOpen, onClose, balances, addNotification, onTransactionComplete }) => {
+  const [crypto, setCrypto] = useState("BRT");
   const [recipientEmail, setRecipientEmail] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,11 +48,18 @@ const SendModal = ({ isOpen, onClose, balances, addNotification }) => {
       
       if (response.data.success) {
         addNotification("success", response.data.message);
-        onClose();
+        
+        // ✅ Очистить форму
         setRecipientEmail("");
         setAmount("");
-        // Обновить баланс
-        window.location.reload();
+        
+        // ✅ Обновить данные через callback
+        if (onTransactionComplete) {
+          await onTransactionComplete();
+        }
+        
+        // ✅ Закрыть модалку
+        onClose();
       }
     } catch (error) {
       addNotification("error", error.response?.data?.message || "Failed to send");
@@ -119,7 +126,7 @@ const SendModal = ({ isOpen, onClose, balances, addNotification }) => {
           </div>
 
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>
               Cancel
             </button>
             <button type="submit" className="btn-primary" disabled={loading}>

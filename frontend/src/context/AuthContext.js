@@ -162,6 +162,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ НОВАЯ ФУНКЦИЯ: Обновить данные пользователя из API
+  const refreshUser = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    
+    try {
+      const response = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setUser(response.data.data);
+        console.log('✅ User data refreshed:', response.data.data.email, response.data.data.balances);
+      }
+    } catch (error) {
+      console.error("Refresh user error:", error);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
@@ -183,7 +201,8 @@ export const AuthProvider = ({ children }) => {
         register, 
         verifyEmail,
         resendVerification,
-        updateUser
+        updateUser,
+        refreshUser
       }}
     >
       {children}
