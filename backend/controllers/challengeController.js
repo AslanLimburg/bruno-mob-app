@@ -41,9 +41,22 @@ class ChallengeController {
         const balanceBefore = parseFloat(balanceResult.rows[0].balance);
         const balanceAfter = balanceBefore - parseFloat(creatorPrize);
         
+        // Вычесть из создателя
         await client.query(
           'UPDATE user_balances SET balance = $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
           [balanceAfter, creatorId, 'BRT']
+        );
+        
+        // ✅ Добавить на admin
+        await client.query(
+          'UPDATE user_balances SET balance = balance + $1, updated_at = NOW() WHERE user_id = 1 AND crypto = $2',
+          [creatorPrize, 'BRT']
+        );
+        
+        // Записать транзакцию
+        await client.query(
+          'INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status) VALUES ($1, 1, $2, $3, $4, $5)',
+          [creatorId, 'BRT', creatorPrize, 'challenge_creator_prize', 'completed']
         );
       }
       
@@ -69,6 +82,9 @@ class ChallengeController {
       const createdOptions = optionResults.map(r => r.rows[0]);
       
       await client.query('COMMIT');
+      
+      console.log(`✅ Challenge created: ${challenge.id}, creator prize ${creatorPrize || 0} BRT sent to admin`);
+      
       res.json({ success: true, message: 'Challenge created successfully', data: { challenge, options: createdOptions } });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -267,7 +283,15 @@ class ChallengeController {
       
       const balanceBefore = parseFloat(balanceResult.rows[0].balance);
       const balanceAfter = balanceBefore - amount;
+      
+      // ✅ Вычесть из пользователя
       await client.query('UPDATE user_balances SET balance = $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3', [balanceAfter, userId, 'BRT']);
+      
+      // ✅ Добавить на admin (100%)
+      await client.query(
+        'UPDATE user_balances SET balance = balance + $1, updated_at = NOW() WHERE user_id = 1 AND crypto = $2',
+        [amount, 'BRT']
+      );
       
       const betResult = await client.query(
         'INSERT INTO bets (challenge_id, user_id, option_id, amount, idempotency_key) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -281,7 +305,16 @@ class ChallengeController {
         [challengeId, bet.id, userId, 'stake_locked', amount, balanceBefore, balanceAfter, `Bet placed on challenge: ${challenge.title}`]
       );
       
+      // ✅ Записать транзакцию User → Admin
+      await client.query(
+        'INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status) VALUES ($1, 1, $2, $3, $4, $5)',
+        [userId, 'BRT', amount, 'challenge_bet', 'completed']
+      );
+      
       await client.query('COMMIT');
+      
+      console.log(`✅ User ${userId} placed bet ${amount} BRT → admin received ${amount} BRT`);
+      
       res.json({ success: true, message: 'Bet placed successfully', data: bet });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -373,7 +406,8 @@ class ChallengeController {
       res.status(500).json({ success: false, message: 'Failed to fetch bets' });
     }
   }
-      /**
+  
+  /**
    * Ручная обработка выплат для челленджа
    * POST /api/challenge/:challengeId/process-payouts
    */
@@ -695,9 +729,16 @@ class ChallengeController {
 
         for (const bet of previousPayouts.rows) {
           if (bet.status === 'won' && bet.payout) {
+            // Вычесть выплату из пользователя (отменить)
             await client.query(
               'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
               [bet.payout, bet.user_id, 'BRT']
+            );
+            
+            // Вернуть admin выплату
+            await client.query(
+              'UPDATE user_balances SET balance = balance + $1, updated_at = NOW() WHERE user_id = 1 AND crypto = $2',
+              [bet.payout, 'BRT']
             );
           }
           await client.query(
@@ -731,9 +772,16 @@ class ChallengeController {
           const balanceBefore = parseFloat(balanceResult.rows[0].balance);
           const balanceAfter = balanceBefore + parseFloat(bet.amount);
 
+          // Вернуть деньги пользователю
           await client.query(
             'UPDATE user_balances SET balance = $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
             [balanceAfter, bet.user_id, 'BRT']
+          );
+          
+          // Вычесть из admin
+          await client.query(
+            'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = 1 AND crypto = $2',
+            [bet.amount, 'BRT']
           );
 
           await client.query(

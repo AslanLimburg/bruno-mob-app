@@ -61,14 +61,11 @@ class PayoutWorker {
       console.log(`✅ Winning bets: ${winningBets.length}`);
       console.log(`❌ Losing bets: ${losingBets.length}`);
 
-      // 4. Вычислить pool и commission
+      // 4. Вычислить pool (все деньги уже на admin)
       const totalPool = allBets.reduce((sum, bet) => sum + parseFloat(bet.amount), 0);
-      const commission = totalPool * 0.10; // 10%
-      const distributableAmount = totalPool - commission;
 
-      console.log(`💵 Total pool: ${totalPool.toFixed(2)} BRT`);
-      console.log(`🏦 Commission (10%): ${commission.toFixed(2)} BRT`);
-      console.log(`💸 Distributable: ${distributableAmount.toFixed(2)} BRT`);
+      console.log(`💵 Total pool (on admin): ${totalPool.toFixed(2)} BRT`);
+      console.log(`💸 Will distribute with 20% admin fee`);
 
       // 5. Обработать выплаты в зависимости от режима
       let payoutResults;
@@ -78,7 +75,7 @@ class PayoutWorker {
           client,
           challenge,
           winningBets,
-          distributableAmount
+          totalPool
         );
       } else if (challenge.payout_mode === 'fixed_creator_prize') {
         payoutResults = await this.processFixedPrizePayouts(
@@ -100,16 +97,11 @@ class PayoutWorker {
 
       console.log(`💀 Updated ${losingBets.length} losing bets`);
 
-      // 7. Начислить комиссию на admin (id=1)
-      const adminId = 1;
-      await ledgerService.creditCommission(client, adminId, commission, challengeId);
-      console.log(`🏦 Commission ${commission.toFixed(2)} BRT credited to admin (id=${adminId})`);
-
-      // 8. Обновить payout_job status
+      // 7. Обновить payout_job status
       await client.query(
         `UPDATE payout_jobs 
          SET status = 'completed', completed_at = NOW()
-         WHERE challenge_id = $1 AND status = 'pending'`,
+         WHERE challenge_id = $1 AND status IN ('pending', 'processing')`,
         [challengeId]
       );
 
@@ -120,8 +112,6 @@ class PayoutWorker {
       return {
         success: true,
         totalPool,
-        commission,
-        distributableAmount,
         winningBetsCount: winningBets.length,
         losingBetsCount: losingBets.length,
         payouts: payoutResults
@@ -132,12 +122,12 @@ class PayoutWorker {
       console.error(`❌ Error processing payouts for challenge ${challengeId}:`, error.message);
 
       // Обновить payout_job с ошибкой
-      await client.query(
+      await pool.query(
         `UPDATE payout_jobs 
          SET status = 'failed', 
              error_message = $1,
              attempt_count = attempt_count + 1
-         WHERE challenge_id = $2 AND status = 'pending'`,
+         WHERE challenge_id = $2 AND status IN ('pending', 'processing')`,
         [error.message, challengeId]
       );
 
@@ -149,10 +139,11 @@ class PayoutWorker {
 
   /**
    * Pool-based выплаты: победители делят пул пропорционально ставкам
+   * Admin платит каждому победителю, с вычетом 20% комиссии
    */
-  async processPoolBasedPayouts(client, challenge, winningBets, distributableAmount) {
+  async processPoolBasedPayouts(client, challenge, winningBets, totalPool) {
     if (winningBets.length === 0) {
-      console.log('⚠️ No winning bets - all money goes to commission');
+      console.log('⚠️ No winning bets - all money stays with admin');
       return [];
     }
 
@@ -162,18 +153,20 @@ class PayoutWorker {
     console.log(`🎯 Winning pool: ${winningPool.toFixed(2)} BRT`);
 
     const payouts = [];
+    let totalPaidOut = 0;
+    let totalAdminFees = 0;
 
     for (const bet of winningBets) {
       const betAmount = parseFloat(bet.amount);
       
-      // Пропорциональная доля от distributable amount
-      const userPayout = (betAmount / winningPool) * distributableAmount;
+      // Пропорциональная доля от total pool
+      const fullPrizeAmount = (betAmount / winningPool) * totalPool;
 
-      // Начислить выигрыш
-      await ledgerService.creditPayout(
+      // ✅ Использовать новую функцию: вычесть из admin, выплатить 80%, оставить 20%
+      const result = await ledgerService.creditPayoutFromAdmin(
         client,
         bet.user_id,
-        userPayout,
+        fullPrizeAmount,
         challenge.id,
         bet.id
       );
@@ -183,24 +176,35 @@ class PayoutWorker {
         `UPDATE bets 
          SET status = 'won', payout = $1
          WHERE id = $2`,
-        [userPayout, bet.id]
+        [result.actualPayout, bet.id]
       );
 
       payouts.push({
         userId: bet.user_id,
         betId: bet.id,
         betAmount: betAmount,
-        payout: userPayout
+        fullPrize: fullPrizeAmount,
+        actualPayout: result.actualPayout,
+        adminFee: result.adminFee
       });
 
-      console.log(`💰 User ${bet.user_id}: bet ${betAmount.toFixed(2)} BRT → payout ${userPayout.toFixed(2)} BRT`);
+      totalPaidOut += result.actualPayout;
+      totalAdminFees += result.adminFee;
+
+      console.log(`💰 User ${bet.user_id}: bet ${betAmount.toFixed(2)} BRT → full prize ${fullPrizeAmount.toFixed(2)} BRT → payout ${result.actualPayout.toFixed(2)} BRT (admin fee: ${result.adminFee.toFixed(2)} BRT)`);
     }
+
+    console.log(`\n📊 Pool distribution summary:`);
+    console.log(`   Total pool: ${totalPool.toFixed(2)} BRT`);
+    console.log(`   Paid to winners: ${totalPaidOut.toFixed(2)} BRT (80%)`);
+    console.log(`   Admin fees: ${totalAdminFees.toFixed(2)} BRT (20%)`);
 
     return payouts;
   }
 
   /**
    * Fixed creator prize выплаты: победители делят фиксированный приз
+   * Admin платит из creator prize с вычетом 20% комиссии
    */
   async processFixedPrizePayouts(client, challenge, winningBets) {
     const creatorPrize = parseFloat(challenge.creator_prize_reserved) || 0;
@@ -210,7 +214,7 @@ class PayoutWorker {
     }
 
     if (winningBets.length === 0) {
-      console.log('⚠️ No winning bets - creator prize stays reserved');
+      console.log('⚠️ No winning bets - creator prize stays with admin');
       return [];
     }
 
@@ -220,18 +224,20 @@ class PayoutWorker {
     const winningPool = winningBets.reduce((sum, bet) => sum + parseFloat(bet.amount), 0);
 
     const payouts = [];
+    let totalPaidOut = 0;
+    let totalAdminFees = 0;
 
     for (const bet of winningBets) {
       const betAmount = parseFloat(bet.amount);
       
       // Пропорциональная доля от creator prize
-      const userPayout = (betAmount / winningPool) * creatorPrize;
+      const fullPrizeAmount = (betAmount / winningPool) * creatorPrize;
 
-      // Начислить выигрыш
-      await ledgerService.creditPayout(
+      // ✅ Использовать новую функцию: вычесть из admin, выплатить 80%, оставить 20%
+      const result = await ledgerService.creditPayoutFromAdmin(
         client,
         bet.user_id,
-        userPayout,
+        fullPrizeAmount,
         challenge.id,
         bet.id
       );
@@ -241,18 +247,28 @@ class PayoutWorker {
         `UPDATE bets 
          SET status = 'won', payout = $1
          WHERE id = $2`,
-        [userPayout, bet.id]
+        [result.actualPayout, bet.id]
       );
 
       payouts.push({
         userId: bet.user_id,
         betId: bet.id,
         betAmount: betAmount,
-        payout: userPayout
+        fullPrize: fullPrizeAmount,
+        actualPayout: result.actualPayout,
+        adminFee: result.adminFee
       });
 
-      console.log(`💰 User ${bet.user_id}: bet ${betAmount.toFixed(2)} BRT → payout ${userPayout.toFixed(2)} BRT`);
+      totalPaidOut += result.actualPayout;
+      totalAdminFees += result.adminFee;
+
+      console.log(`💰 User ${bet.user_id}: bet ${betAmount.toFixed(2)} BRT → full prize ${fullPrizeAmount.toFixed(2)} BRT → payout ${result.actualPayout.toFixed(2)} BRT (admin fee: ${result.adminFee.toFixed(2)} BRT)`);
     }
+
+    console.log(`\n📊 Fixed prize distribution summary:`);
+    console.log(`   Creator prize: ${creatorPrize.toFixed(2)} BRT`);
+    console.log(`   Paid to winners: ${totalPaidOut.toFixed(2)} BRT (80%)`);
+    console.log(`   Admin fees: ${totalAdminFees.toFixed(2)} BRT (20%)`);
 
     return payouts;
   }

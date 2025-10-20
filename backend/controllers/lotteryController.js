@@ -83,7 +83,7 @@ const buyTicket = async (req, res) => {
         throw new Error('Insufficient balance');
       }
       
-      // Deduct BRT from user_balances
+      // ✅ Вычесть BRT из user_balances
       await client.query(
         `UPDATE user_balances 
          SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP
@@ -91,41 +91,26 @@ const buyTicket = async (req, res) => {
         [ticketCost, userId]
       );
       
-      // Get current draw
-      const draw = await lotteryAPI.getCurrentDraw();
-      const drawDate = new Date(draw.draw_date);
-      
-      // Distribution: 60% prize pool, 20% platform, 20% jackpot
-      const toPrizePool = ticketCost * 0.60;
-      const toPlatform = ticketCost * 0.20;
-      const toJackpot = ticketCost * 0.20;
-      
-      // Update prize pool
-      await client.query(
-        `UPDATE lottery_draws 
-         SET current_prize_pool = current_prize_pool + $1,
-             platform_balance = platform_balance + $2,
-             jackpot_contribution = jackpot_contribution + $3,
-             total_tickets = total_tickets + $4,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE draw_date = $5`,
-        [toPrizePool, toPlatform, toJackpot, draw_count, drawDate]
-      );
-      
-      // Add to jackpot
-      await client.query(
-        `UPDATE lottery_jackpot 
-         SET total_amount = total_amount + $1, updated_at = CURRENT_TIMESTAMP
-         WHERE id = 1`,
-        [toJackpot]
-      );
-      
-      // Add platform fee to admin (user_id = 1)
+      // ✅ 100% идёт на admin (user_id = 1)
       await client.query(
         `UPDATE user_balances 
          SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP
          WHERE user_id = 1 AND crypto = 'BRT'`,
-        [toPlatform]
+        [ticketCost]
+      );
+      
+      // Get current draw
+      const draw = await lotteryAPI.getCurrentDraw();
+      const drawDate = new Date(draw.draw_date);
+      
+      // Обновляем только счётчик билетов и prize pool для статистики
+      await client.query(
+        `UPDATE lottery_draws 
+         SET current_prize_pool = current_prize_pool + $1,
+             total_tickets = total_tickets + $2,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE draw_date = $3`,
+        [ticketCost, draw_count, drawDate]
       );
       
       // Create tickets
@@ -153,13 +138,15 @@ const buyTicket = async (req, res) => {
         });
       }
       
-      // Record transaction
+      // ✅ Транзакция User → Admin
       await client.query(
         `INSERT INTO transactions 
          (from_user_id, to_user_id, crypto, amount, type, status)
          VALUES ($1, 1, 'BRT', $2, 'lottery_ticket_purchase', 'completed')`,
         [userId, ticketCost]
       );
+      
+      console.log(`✅ User ${userId} bought ${draw_count} ticket(s) for ${ticketCost} BRT → admin received ${ticketCost} BRT`);
       
       return {
         tickets,

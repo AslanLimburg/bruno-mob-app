@@ -481,5 +481,159 @@ router.delete('/blacklist/:id', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+// ==========================================
+// SYSTEM BALANCES MANAGEMENT
+// ==========================================
+
+// GET /api/super-admin/system-balances - Получить балансы системных аккаунтов
+router.get('/system-balances', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        // ID системных аккаунтов
+        const systemAccountIds = [1, 11, 17, 18]; // admin, gasfee, treasury, brtstar
+        
+        const result = await pool.query(`
+            SELECT 
+                ub.user_id,
+                u.email,
+                ub.crypto,
+                ub.balance,
+                ub.updated_at
+            FROM user_balances ub
+            JOIN users u ON ub.user_id = u.id
+            WHERE ub.user_id = ANY($1)
+            ORDER BY ub.user_id, ub.crypto
+        `, [systemAccountIds]);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error('Get system balances error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST /api/super-admin/system-transfer - Перевод между системными аккаунтами
+router.post('/system-transfer', async (req, res) => {
+    const pool = require('../config/database');
+    const client = await pool.connect();
+    
+    try {
+        const { fromAccount, toAccount, crypto, amount, reason } = req.body;
+        const { logAdminActivity } = require('../utils/logger');
+        
+        // Валидация
+        if (!fromAccount || !toAccount || !crypto || !amount || !reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'All fields are required' 
+            });
+        }
+        
+        const systemAccountIds = [1, 11, 17, 18];
+        const fromId = parseInt(fromAccount);
+        const toId = parseInt(toAccount);
+        const transferAmount = parseFloat(amount);
+        
+        if (!systemAccountIds.includes(fromId) || !systemAccountIds.includes(toId)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid system account ID' 
+            });
+        }
+        
+        if (fromId === toId) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Cannot transfer to the same account' 
+            });
+        }
+        
+        if (transferAmount <= 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Amount must be positive' 
+            });
+        }
+        
+        await client.query('BEGIN');
+        
+        // Проверить баланс отправителя
+        const balanceCheck = await client.query(
+            `SELECT balance FROM user_balances 
+             WHERE user_id = $1 AND crypto = $2`,
+            [fromId, crypto]
+        );
+        
+        if (balanceCheck.rows.length === 0 || parseFloat(balanceCheck.rows[0].balance) < transferAmount) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Insufficient balance' 
+            });
+        }
+        
+        // Вычесть из отправителя
+        await client.query(
+            `UPDATE user_balances 
+             SET balance = balance - $1, updated_at = NOW()
+             WHERE user_id = $2 AND crypto = $3`,
+            [transferAmount, fromId, crypto]
+        );
+        
+        // Добавить получателю
+        await client.query(
+            `UPDATE user_balances 
+             SET balance = balance + $1, updated_at = NOW()
+             WHERE user_id = $2 AND crypto = $3`,
+            [transferAmount, toId, crypto]
+        );
+        
+        // Создать транзакцию
+        await client.query(
+            `INSERT INTO transactions 
+             (from_user_id, to_user_id, crypto, amount, type, status, metadata)
+             VALUES ($1, $2, $3, $4, 'system_transfer', 'completed', $5)`,
+            [fromId, toId, crypto, transferAmount, JSON.stringify({ 
+                reason, 
+                admin_id: req.user.id,
+                admin_email: req.user.email
+            })]
+        );
+        
+        // Логировать
+        await logAdminActivity(
+            req.user.id,
+            'SYSTEM_TRANSFER',
+            'system_balance',
+            null,
+            `Transferred ${transferAmount} ${crypto} from ${fromId} to ${toId}. Reason: ${reason}`,
+            { fromAccount: fromId, toAccount: toId, crypto, amount: transferAmount, reason },
+            req.ip
+        );
+        
+        await client.query('COMMIT');
+        
+        console.log(`✅ System transfer: ${transferAmount} ${crypto} from ${fromId} to ${toId} by admin ${req.user.id}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Transfer completed successfully',
+            data: {
+                from: fromId,
+                to: toId,
+                crypto,
+                amount: transferAmount
+            }
+        });
+        
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('System transfer error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    } finally {
+        client.release();
+    }
+});
 
 module.exports = router;

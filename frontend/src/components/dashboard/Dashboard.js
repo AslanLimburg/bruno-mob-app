@@ -66,34 +66,55 @@ const Dashboard = ({addNotification}) => {
     }
   }, [activeTab]);
   
-  // ✅ Функция перезагрузки транзакций
-  const fetchTransactions = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/wallet/transactions`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
+  // ✅ Функция перезагрузки транзакций с отладкой
+const fetchTransactions = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/wallet/transactions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await response.json();
+    
+    console.log('📊 API Response:', data);
+    console.log('📊 User ID:', user?.id);
+    
+    // ✅ ИСПРАВЛЕНО: data.success вместо data.status
+    if (data.success && data.data) {
+      console.log('📊 Raw transactions count:', data.data.length);
       
-      if (data.success && data.data) {
-        const formattedTx = data.data.map(t => ({
+      const formattedTx = data.data.map(t => {
+        // Определяем тип транзакции
+        let type = 'send';
+        if (t.to_user_id === user?.id) {
+          type = 'receive';
+        }
+        
+        console.log(`TX ${t.id}: from=${t.from_user_id}, to=${t.to_user_id}, user=${user?.id}, type=${type}`);
+        
+        return {
           id: t.id,
-          type: t.from_user_id === user?.id ? 'send' : 'receive',
+          type: type,
           crypto: t.crypto,
           amount: parseFloat(t.amount),
           status: t.status,
           date: new Date(t.created_at).toLocaleString(),
           from: t.from_email || 'System',
           to: t.to_email || 'System'
-        }));
-        setTransactions(formattedTx);
-      }
-    } catch (error) {
-      console.error('Failed to load transactions:', error);
-    } finally {
-      setLoadingTransactions(false);
+        };
+      });
+      
+      console.log('✅ Formatted transactions:', formattedTx.length);
+      console.log('✅ First 3 transactions:', formattedTx.slice(0, 3));
+      setTransactions(formattedTx);
+    } else {
+      console.log('❌ Invalid response format:', data);
     }
-  };
+  } catch (error) {
+    console.error('Failed to load transactions:', error);
+  } finally {
+    setLoadingTransactions(false);
+  }
+};
   
   // Загрузить транзакции при монтировании
   useEffect(() => {
@@ -105,8 +126,8 @@ const Dashboard = ({addNotification}) => {
   // ✅ Коллбек после успешной транзакции
   const handleTransactionComplete = async () => {
     console.log('🔄 Transaction completed, refreshing data...');
-    await refreshUser();  // Обновить баланс
-    await fetchTransactions();  // Обновить транзакции
+    await refreshUser();
+    await fetchTransactions();
     console.log('✅ Data refreshed');
   };
   
@@ -115,7 +136,7 @@ const Dashboard = ({addNotification}) => {
     const interval = setInterval(async () => {
       console.log('🔄 Auto-refreshing user data...');
       await refreshUser();
-    }, 10000); // 10 секунд
+    }, 10000);
     
     return () => clearInterval(interval);
   }, [refreshUser]);

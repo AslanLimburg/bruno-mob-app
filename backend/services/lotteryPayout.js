@@ -30,34 +30,62 @@ class LotteryPayout {
         console.log(`🎉 Found ${winners.length} winning tickets`);
 
         let totalPaid = 0;
+        let adminFees = 0;
         let jackpotWon = false;
 
         for (const ticket of winners) {
-          // Credit user balance in user_balances table
+          // ✅ Admin платит 80% от prize_amount (вычет 20% комиссии)
+          const fullPrize = parseFloat(ticket.prize_amount);
+          const adminFee = fullPrize * 0.20; // 20% комиссия остаётся у admin
+          const actualPayout = fullPrize * 0.80; // 80% получает победитель
+          
+          // Вычесть полную сумму из admin
+          await client.query(
+            `UPDATE user_balances 
+             SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP
+             WHERE user_id = 1 AND crypto = 'BRT'`,
+            [fullPrize]
+          );
+
+          // Вернуть 20% комиссии admin
+          await client.query(
+            `UPDATE user_balances 
+             SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP
+             WHERE user_id = 1 AND crypto = 'BRT'`,
+            [adminFee]
+          );
+
+          // Выплатить 80% победителю
           await client.query(
             `UPDATE user_balances 
              SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP
              WHERE user_id = $2 AND crypto = 'BRT'`,
-            [ticket.prize_amount, ticket.user_id]
+            [actualPayout, ticket.user_id]
           );
 
-          // Record payout
+          // Record payout (записываем фактическую выплату)
           await client.query(
             `INSERT INTO lottery_payouts 
              (ticket_id, user_id, draw_date, prize_category, prize_amount)
              VALUES ($1, $2, $3, $4, $5)`,
-            [ticket.id, ticket.user_id, ticket.draw_date, ticket.prize_category, ticket.prize_amount]
+            [ticket.id, ticket.user_id, ticket.draw_date, ticket.prize_category, actualPayout]
           );
 
-          // Record transaction
+          // Record transaction (Admin → Winner)
           await client.query(
             `INSERT INTO transactions 
-             (from_user_id, to_user_id, crypto, amount, type, status)
-             VALUES (1, $1, 'BRT', $2, 'lottery_prize', 'completed')`,
-            [ticket.user_id, ticket.prize_amount]
+             (from_user_id, to_user_id, crypto, amount, type, status, metadata)
+             VALUES (1, $1, 'BRT', $2, 'lottery_prize', 'completed', 
+                     $3::jsonb)`,
+            [ticket.user_id, actualPayout, JSON.stringify({
+              full_prize: fullPrize,
+              admin_fee: adminFee,
+              payout: actualPayout
+            })]
           );
 
-          totalPaid += parseFloat(ticket.prize_amount);
+          totalPaid += actualPayout;
+          adminFees += adminFee;
 
           // Check if jackpot was won
           if (ticket.prize_category === '6') {
@@ -71,13 +99,13 @@ class LotteryPayout {
                    total_amount = 100.00,
                    updated_at = CURRENT_TIMESTAMP
                WHERE id = 1`,
-              [ticket.prize_amount]
+              [actualPayout]
             );
             
-            console.log(`🏆 JACKPOT WON! User ${ticket.user_id} won ${ticket.prize_amount} BRT`);
+            console.log(`🏆 JACKPOT WON! User ${ticket.user_id} won ${actualPayout} BRT (${fullPrize} BRT - 20% fee)`);
           }
 
-          console.log(`✅ Paid ${ticket.prize_amount} BRT to user ${ticket.user_id}`);
+          console.log(`✅ Paid ${actualPayout} BRT to user ${ticket.user_id} (full prize: ${fullPrize} BRT, admin fee: ${adminFee} BRT)`);
         }
 
         // Update draw status
@@ -87,10 +115,12 @@ class LotteryPayout {
         );
 
         console.log(`💵 Total paid out: ${totalPaid.toFixed(2)} BRT`);
+        console.log(`💰 Admin fees collected: ${adminFees.toFixed(2)} BRT`);
 
         return {
           winnersCount: winners.length,
           totalPaid: totalPaid,
+          adminFees: adminFees,
           jackpotWon: jackpotWon
         };
       });

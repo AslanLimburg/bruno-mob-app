@@ -136,7 +136,7 @@ class StarsChallengeService {
       // Записать транзакцию
       await client.query(
         `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, reference_id)
-         VALUES ($1, 1, 'BRT', 1, 'challenge_submission', 'completed', $2)`,
+         VALUES ($1, 1, 'BRT', 1, 'stars_challenge_submission', 'completed', $2)`,
         [userId, challengeId]
       );
       
@@ -148,6 +148,8 @@ class StarsChallengeService {
       );
       
       await client.query('COMMIT');
+      
+      console.log(`✅ User ${userId} submitted photo to challenge ${challengeId} (1 BRT → admin)`);
       
       return {
         success: true,
@@ -165,6 +167,7 @@ class StarsChallengeService {
   
   /**
    * Голосовать в Challenge
+   * ✅ 100% голосов идёт на admin
    */
   static async voteInChallenge(fromUserId, challengeId, participantId, starsCount) {
     const client = await pool.connect();
@@ -243,6 +246,21 @@ class StarsChallengeService {
         [totalBRT, fromUserId]
       );
       
+      // Начислить 100% на admin (id=1)
+      await client.query(
+        `UPDATE user_balances 
+         SET balance = balance + $1, updated_at = NOW()
+         WHERE user_id = 1 AND crypto = 'BRT'`,
+        [totalBRT]
+      );
+      
+      // Записать транзакцию
+      await client.query(
+        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, reference_id)
+         VALUES ($1, 1, 'BRT', $2, 'stars_challenge_vote', 'completed', $3)`,
+        [fromUserId, totalBRT, challengeId]
+      );
+      
       // Записать голос
       await client.query(
         `INSERT INTO stars_challenge_votes (challenge_id, participant_id, from_user_id, stars_count, brt_amount)
@@ -253,6 +271,8 @@ class StarsChallengeService {
       // Триггер автоматически обновит total_votes и total_pool
       
       await client.query('COMMIT');
+      
+      console.log(`✅ User ${fromUserId} voted ${starsCount} Stars in challenge ${challengeId} → ${totalBRT} BRT to admin`);
       
       return {
         success: true,
@@ -308,6 +328,11 @@ class StarsChallengeService {
   
   /**
    * Закрыть Challenge и распределить награды
+   * ✅ ПРАВИЛЬНАЯ СХЕМА:
+   * - 50% → Победитель
+   * - 10% → admin@brunotoken.com
+   * - 10% → brtstar@brunotoken.com
+   * - 30% → Голосовавшие за победителя (пропорционально)
    */
   static async closeChallenge(adminId, challengeId) {
     const client = await pool.connect();
@@ -341,6 +366,9 @@ class StarsChallengeService {
       if (totalPool === 0) {
         throw new Error('No votes in this challenge, cannot distribute rewards');
       }
+      
+      console.log(`\n🏆 Closing Stars Challenge ${challengeId}`);
+      console.log(`💰 Total pool (on admin): ${totalPool.toFixed(2)} BRT`);
       
       // Найти победителя (max total_votes)
       const winner = await client.query(
@@ -376,13 +404,38 @@ class StarsChallengeService {
         [winnerData.id]
       );
       
-      // Распределение наград
-      const winnerAmount = totalPool * 0.50; // 50%
-      const platformAmount = totalPool * 0.15; // 15%
-      const adminAmount = totalPool * 0.10; // 10%
-      const votersAmount = totalPool * 0.25; // 25%
+      // Получить ID brtstar аккаунта
+      const brtstarResult = await client.query(
+        `SELECT id FROM users WHERE email = 'brtstar@brunotoken.com'`
+      );
       
-      // 1. Начислить победителю (50%)
+      if (brtstarResult.rows.length === 0) {
+        throw new Error('brtstar@brunotoken.com account not found. Please create it first.');
+      }
+      
+      const brtstarId = brtstarResult.rows[0].id;
+      
+      // ✅ РАСПРЕДЕЛЕНИЕ НАГРАД
+      const winnerAmount = totalPool * 0.50; // 50% победителю
+      const adminAmount = totalPool * 0.10; // 10% admin остаётся
+      const brtstarAmount = totalPool * 0.10; // 10% brtstar
+      const votersAmount = totalPool * 0.30; // 30% голосовавшим за победителя
+      
+      console.log(`📊 Distribution:`);
+      console.log(`   50% → Winner: ${winnerAmount.toFixed(2)} BRT`);
+      console.log(`   10% → Admin: ${adminAmount.toFixed(2)} BRT`);
+      console.log(`   10% → BRT Star: ${brtstarAmount.toFixed(2)} BRT`);
+      console.log(`   30% → Voters: ${votersAmount.toFixed(2)} BRT`);
+      
+      // 1. Вычесть totalPool из admin
+      await client.query(
+        `UPDATE user_balances 
+         SET balance = balance - $1, updated_at = NOW()
+         WHERE user_id = 1 AND crypto = 'BRT'`,
+        [totalPool]
+      );
+      
+      // 2. Выплатить 50% победителю
       await client.query(
         `UPDATE user_balances 
          SET balance = balance + $1, updated_at = NOW()
@@ -396,47 +449,68 @@ class StarsChallengeService {
         [challengeId, winnerData.user_id, winnerAmount]
       );
       
-      // 2. Начислить платформе (15%)
+      await client.query(
+        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, reference_id)
+         VALUES (1, $1, 'BRT', $2, 'stars_challenge_winner', 'completed', $3)`,
+        [winnerData.user_id, winnerAmount, challengeId]
+      );
+      
+      console.log(`   ✅ Winner ${winnerData.user_id} received ${winnerAmount.toFixed(2)} BRT`);
+      
+      // 3. Вернуть 10% admin
       await client.query(
         `UPDATE user_balances 
          SET balance = balance + $1, updated_at = NOW()
-         WHERE user_id = 1 AND crypto = 'BRT'`, // admin@brunotoken.com
-        [platformAmount]
+         WHERE user_id = 1 AND crypto = 'BRT'`,
+        [adminAmount]
       );
       
       await client.query(
         `INSERT INTO stars_reward_history (challenge_id, recipient_user_id, recipient_type, amount, percentage)
-         VALUES ($1, 1, 'platform', $2, 15)`,
-        [challengeId, platformAmount]
+         VALUES ($1, 1, 'admin_commission', $2, 10)`,
+        [challengeId, adminAmount]
       );
       
-      // 3. Начислить админу Challenge (10%)
+      console.log(`   ✅ Admin kept ${adminAmount.toFixed(2)} BRT`);
+      
+      // 4. Выплатить 10% brtstar
       await client.query(
         `UPDATE user_balances 
          SET balance = balance + $1, updated_at = NOW()
          WHERE user_id = $2 AND crypto = 'BRT'`,
-        [adminAmount, challengeData.created_by]
+        [brtstarAmount, brtstarId]
       );
       
       await client.query(
         `INSERT INTO stars_reward_history (challenge_id, recipient_user_id, recipient_type, amount, percentage)
-         VALUES ($1, $2, 'admin', $3, 10)`,
-        [challengeId, challengeData.created_by, adminAmount]
+         VALUES ($1, $2, 'brtstar_commission', $3, 10)`,
+        [challengeId, brtstarId, brtstarAmount]
       );
       
-      // 4. Распределить между голосовавшими за победителя (25%)
+      await client.query(
+        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, reference_id)
+         VALUES (1, $1, 'BRT', $2, 'stars_challenge_brtstar', 'completed', $3)`,
+        [brtstarId, brtstarAmount, challengeId]
+      );
+      
+      console.log(`   ✅ BRT Star received ${brtstarAmount.toFixed(2)} BRT`);
+      
+      // 5. Распределить 30% между голосовавшими за победителя
       const voters = await client.query(
-        `SELECT from_user_id, stars_count 
+        `SELECT from_user_id, stars_count, brt_amount
          FROM stars_challenge_votes 
          WHERE challenge_id = $1 AND participant_id = $2`,
         [challengeId, winnerData.id]
       );
       
       if (voters.rows.length > 0) {
-        const totalVoterStars = voters.rows.reduce((sum, v) => sum + v.stars_count, 0);
+        const totalVoterBRT = voters.rows.reduce((sum, v) => sum + parseFloat(v.brt_amount), 0);
+        
+        console.log(`   💰 Distributing ${votersAmount.toFixed(2)} BRT among ${voters.rows.length} voters:`);
         
         for (const voter of voters.rows) {
-          const voterShare = (voter.stars_count / totalVoterStars) * votersAmount;
+          const voterBRT = parseFloat(voter.brt_amount);
+          const voterShare = (voterBRT / totalVoterBRT) * votersAmount;
           
           await client.query(
             `UPDATE user_balances 
@@ -448,12 +522,30 @@ class StarsChallengeService {
           await client.query(
             `INSERT INTO stars_reward_history (challenge_id, recipient_user_id, recipient_type, amount, percentage)
              VALUES ($1, $2, 'voter', $3, $4)`,
-            [challengeId, voter.from_user_id, voterShare, (voter.stars_count / totalVoterStars) * 25]
+            [challengeId, voter.from_user_id, voterShare, (voterBRT / totalVoterBRT) * 30]
           );
+          
+          await client.query(
+            `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, reference_id)
+             VALUES (1, $1, 'BRT', $2, 'stars_challenge_voter_reward', 'completed', $3)`,
+            [voter.from_user_id, voterShare, challengeId]
+          );
+          
+          console.log(`      → Voter ${voter.from_user_id}: ${voterShare.toFixed(2)} BRT (voted ${voterBRT} BRT)`);
         }
+      } else {
+        console.log(`   ⚠️ No voters found for winner - ${votersAmount.toFixed(2)} BRT stays with admin`);
+        
+        // Если нет голосовавших за победителя, вернуть 30% admin
+        await client.query(
+          `UPDATE user_balances 
+           SET balance = balance + $1, updated_at = NOW()
+           WHERE user_id = 1 AND crypto = 'BRT'`,
+          [votersAmount]
+        );
       }
       
-      // Обновить Challenge
+      // 6. Обновить Challenge
       await client.query(
         `UPDATE stars_challenges 
          SET status = 'completed', 
@@ -467,6 +559,8 @@ class StarsChallengeService {
       
       await client.query('COMMIT');
       
+      console.log(`✅ Challenge ${challengeId} closed successfully\n`);
+      
       return {
         success: true,
         message: 'Challenge closed and rewards distributed successfully',
@@ -478,9 +572,11 @@ class StarsChallengeService {
         },
         distribution: {
           winner: winnerAmount,
-          platform: platformAmount,
           admin: adminAmount,
-          voters: votersAmount
+          brtstar: brtstarAmount,
+          voters: votersAmount,
+          voters_count: voters.rows.length,
+          total_pool: totalPool
         }
       };
       

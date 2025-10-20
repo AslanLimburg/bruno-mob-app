@@ -7,6 +7,7 @@ import './SuperAdmin.css';
 import Dashboard from './Dashboard';
 import UsersManagement from './UsersManagement';
 import BalancesManagement from './BalancesManagement';
+import SystemBalances from './SystemBalances';
 import TransactionsView from './TransactionsView';
 import ReferralsTree from './ReferralsTree';
 import LogsView from './LogsView';
@@ -34,6 +35,7 @@ const SuperAdminPanel = ({ addNotification }) => {
         { id: 'dashboard', name: '📊 Dashboard', icon: '📊' },
         { id: 'users', name: '👥 Users', icon: '👥' },
         { id: 'balances', name: '💰 Balances', icon: '💰' },
+        { id: 'system', name: '⚖️ System', icon: '⚖️' },
         { id: 'transactions', name: '💳 Transactions', icon: '💳' },
         { id: 'referrals', name: '🔗 Referrals', icon: '🔗' },
         { id: 'logs', name: '📋 Logs', icon: '📋' },
@@ -48,6 +50,8 @@ const SuperAdminPanel = ({ addNotification }) => {
                 return <UsersManagement />;
             case 'balances':
                 return <BalancesManagement />;
+            case 'system':
+                return <SystemBalances />;
             case 'transactions':
                 return <TransactionsView />;
             case 'referrals':
