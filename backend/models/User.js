@@ -17,6 +17,7 @@ class User {
 
       const user = userResult.rows[0];
 
+      // Создать балансы для всех криптовалют
       const cryptos = ['BRT', 'BRTC', 'USDT', 'USDC', 'ETH', 'BTC', 'TRX'];
       for (const crypto of cryptos) {
         await client.query(
@@ -25,17 +26,39 @@ class User {
         );
       }
 
-      await client.query(
-        `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status)
-         VALUES (2, $1, 'BRT', 0.02, 'welcome_bonus', 'completed')`,
-        [user.id]
+      // ✅ ИЗМЕНЕНО: Welcome bonus теперь из treasury
+      const treasuryResult = await client.query(
+        `SELECT id FROM users WHERE email = 'treasury@brunotoken.com'`
       );
+      
+      if (treasuryResult.rows.length > 0) {
+        const treasuryId = treasuryResult.rows[0].id;
+        
+        // Создать транзакцию welcome bonus
+        await client.query(
+          `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status)
+           VALUES ($1, $2, 'BRT', 0.02, 'welcome_bonus', 'completed')`,
+          [treasuryId, user.id]
+        );
 
-      await client.query(`UPDATE user_balances SET balance = balance - 0.02 WHERE user_id = 2 AND crypto = 
-'BRT'`);
-      await client.query(`UPDATE user_balances SET balance = balance + 0.02 WHERE user_id = $1 AND crypto = 
-'BRT'`, [user.id]);
+        // Списать с treasury
+        await client.query(
+          `UPDATE user_balances SET balance = balance - 0.02 
+           WHERE user_id = $1 AND crypto = 'BRT'`,
+          [treasuryId]
+        );
+        
+        // Начислить новому пользователю
+        await client.query(
+          `UPDATE user_balances SET balance = balance + 0.02 
+           WHERE user_id = $1 AND crypto = 'BRT'`,
+          [user.id]
+        );
+        
+        console.log(`✅ Welcome bonus 0.02 BRT credited from treasury to user ${user.id}`);
+      }
 
+      // ✅ ИЗМЕНЕНО: Referral signup bonus теперь из treasury
       if (referralCode) {
         const referrerResult = await client.query(
           `SELECT id, membership_tier FROM users WHERE referral_code = $1`,
@@ -45,20 +68,38 @@ class User {
         if (referrerResult.rows.length > 0) {
           const referrer = referrerResult.rows[0];
           const tiers = {
-            'GS-I': 0.88, 'GS-II': 4.98, 'GS-III': 34.98, 'GS-IV': 61.48
+            'GS-I': 0.88, 
+            'GS-II': 4.98, 
+            'GS-III': 34.98, 
+            'GS-IV': 61.48
           };
-          const commission = tiers[referrer.membership_tier] || 0;
+          const commission = tiers[referrer.membership_tier] || 0.88; // Default GS-I
 
-          if (commission > 0) {
+          if (commission > 0 && treasuryResult.rows.length > 0) {
+            const treasuryId = treasuryResult.rows[0].id;
+            
+            // Создать транзакцию referral signup bonus
             await client.query(
               `INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status)
-               VALUES (1, $1, 'BRT', $2, 'referral_payout', 'completed')`,
-              [referrer.id, commission]
+               VALUES ($1, $2, 'BRT', $3, 'referral_signup_bonus', 'completed')`,
+              [treasuryId, referrer.id, commission]
             );
-            await client.query(`UPDATE user_balances SET balance = balance - $1 WHERE user_id = 1 AND crypto = 
-'BRT'`, [commission]);
-            await client.query(`UPDATE user_balances SET balance = balance + $1 WHERE user_id = $2 AND crypto = 
-'BRT'`, [commission, referrer.id]);
+            
+            // Списать с treasury
+            await client.query(
+              `UPDATE user_balances SET balance = balance - $1 
+               WHERE user_id = $2 AND crypto = 'BRT'`,
+              [commission, treasuryId]
+            );
+            
+            // Начислить рефереру
+            await client.query(
+              `UPDATE user_balances SET balance = balance + $1 
+               WHERE user_id = $2 AND crypto = 'BRT'`,
+              [commission, referrer.id]
+            );
+            
+            console.log(`✅ Referral signup bonus ${commission} BRT credited from treasury to referrer ${referrer.id}`);
           }
         }
       }

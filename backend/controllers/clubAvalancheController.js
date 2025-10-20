@@ -3,10 +3,34 @@ const crypto = require('crypto');
 
 // Конфигурация программ
 const PROGRAMS = {
-  'GS-I': { price: 5, levels: 4, perLevel: 0.90, gasFee: 0.02 },
-  'GS-II': { price: 50, levels: 5, perLevel: 5.00, gasFee: 0.02 },
-  'GS-III': { price: 500, levels: 7, perLevel: 35.71, gasFee: 0.02 },
-  'GS-IV': { price: 1000, levels: 8, perLevel: 62.50, gasFee: 0.02 }
+  'GS-I': { 
+    price: 5, 
+    levels: 4, 
+    perLevel: 0.90, 
+    gasFee: 0.02,
+    adminPercent: 0
+  },
+  'GS-II': { 
+    price: 50, 
+    levels: 5, 
+    perLevel: null,
+    gasFee: 0.02,
+    adminPercent: 0.5
+  },
+  'GS-III': { 
+    price: 500, 
+    levels: 7, 
+    perLevel: null,
+    gasFee: 0.02,
+    adminPercent: 0.5
+  },
+  'GS-IV': { 
+    price: 1000, 
+    levels: 8, 
+    perLevel: null,
+    gasFee: 0.02,
+    adminPercent: 0.5
+  }
 };
 
 // Генерация уникального реферального кода
@@ -80,36 +104,62 @@ const joinProgram = async (req, res) => {
         [config.price, userId, 'BRT']
       );
 
+      console.log(`💰 User ${userId} paid ${config.price} BRT for ${program}`);
+
       // 6. Создать членство
       await client.query(
         'INSERT INTO gs_memberships (user_id, program, referrer_id, referral_code, amount_paid) VALUES ($1, $2, $3, $4, $5)',
         [userId, program, referrerId, newCode, config.price]
       );
 
-	// 7. Построить иерархию
-	const hierarchy = [referrerId];
-	let currentId = referrerId;
+      // Получить ID системных аккаунтов
+      const adminResult = await client.query(
+        "SELECT id FROM users WHERE email = 'admin@brunotoken.com'"
+      );
+      const gasFeeResult = await client.query(
+        "SELECT id FROM users WHERE email = 'gasfee@brunotoken.com'"
+      );
 
-	for (let i = 1; i < config.levels; i++) {
- 	 if (!currentId) {
-	    hierarchy.push(null);
-	    continue;
- 	 }
-  
-	  const parent = await client.query(
- 	   'SELECT referrer_id FROM gs_memberships WHERE user_id = $1 AND program = $2',
- 	   [currentId, program]
-	  );
-  
-	  currentId = parent.rows[0]?.referrer_id || null;
-	  hierarchy.push(currentId);
-	}
+      const adminId = adminResult.rows[0]?.id || 1;
+      const gasFeeId = gasFeeResult.rows[0]?.id || 11;
 
-	// Дополняем до 8 уровней NULL значениями
-	while (hierarchy.length < 8) {
-	  hierarchy.push(null);
-	}
+      console.log(`🏦 System accounts: admin=${adminId}, gasfee=${gasFeeId}`);
+
+      // 7. Построить иерархию (игнорируя admin)
+      const hierarchy = [];
+      let currentId = referrerId;
+
+      for (let i = 0; i < config.levels; i++) {
+        if (currentId === adminId) {
+          hierarchy.push(null);
+          currentId = null;
+          continue;
+        }
+        
+        if (!currentId) {
+          hierarchy.push(null);
+          continue;
+        }
+        
+        hierarchy.push(currentId);
+        
+        if (i < config.levels - 1) {
+          const parent = await client.query(
+            'SELECT referrer_id FROM gs_memberships WHERE user_id = $1 AND program = $2',
+            [currentId, program]
+          );
+          
+          currentId = parent.rows[0]?.referrer_id || null;
+        }
+      }
+
+      console.log(`🔗 Hierarchy (${hierarchy.filter(h => h).length} active levels):`, hierarchy);
+
       // 8. Сохранить иерархию
+      while (hierarchy.length < 8) {
+        hierarchy.push(null);
+      }
+      
       const hierarchyValues = [userId, program, ...hierarchy];
       const placeholders = hierarchy.map((_, i) => `$${i + 3}`).join(', ');
       
@@ -119,53 +169,90 @@ const joinProgram = async (req, res) => {
         hierarchyValues
       );
 
-      // 9. Распределить комиссии
+      // 9. Распределение
       let totalPaid = 0;
+      let totalToReferrals = 0;
       
-      for (let i = 0; i < hierarchy.length; i++) {
-        const recipientId = hierarchy[i];
-        if (!recipientId) continue;
-
-        const commission = config.perLevel - config.gasFee;
+      // Для GS-II/III/IV: сначала 50% на admin
+      if (config.adminPercent > 0) {
+        const adminShare = config.price * config.adminPercent;
         
-        // Начислить комиссию
         await client.query(
           'UPDATE user_balances SET balance = balance + $1 WHERE user_id = $2 AND crypto = $3',
-          [commission, recipientId, 'BRT']
+          [adminShare, adminId, 'BRT']
         );
 
+        // ✅ ИСПРАВЛЕНО: Пишем в transactions с metadata
         await client.query(
-          'INSERT INTO gs_transactions (from_user_id, to_user_id, program, amount, type, level) VALUES ($1, $2, $3, $4, $5, $6)',
-          [userId, recipientId, program, commission, 'referral_commission', i + 1]
+          'INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [userId, adminId, 'BRT', adminShare, 'club_avalanche_admin_50', 'completed', JSON.stringify({program})]
         );
 
-        // Gas fee в фонд
-        await client.query(
-          'UPDATE user_balances SET balance = balance + $1 WHERE user_id = 2 AND crypto = $2',
-          [config.gasFee, 'BRT']
-        );
-
-        await client.query(
-          'INSERT INTO gs_transactions (from_user_id, to_user_id, program, amount, type, level) VALUES ($1, 2, $2, $3, $4, $5)',
-          [userId, program, config.gasFee, 'gas_fee', i + 1]
-        );
-
-        totalPaid += config.perLevel;
+        totalPaid += adminShare;
+        console.log(`✅ Admin 50%: ${adminShare} BRT → admin@brunotoken.com`);
       }
 
-      // 10. Остаток в резервный фонд
-      const reserve = config.price - totalPaid;
-      if (reserve > 0) {
+      const referralPool = config.price - totalPaid;
+      const actualPerLevel = referralPool / config.levels;
+
+      console.log(`💎 Referral pool: ${referralPool} BRT / ${config.levels} levels = ${actualPerLevel.toFixed(2)} BRT per level`);
+
+      // Распределить по ВСЕМ уровням
+      for (let i = 0; i < config.levels; i++) {
+        const recipientId = hierarchy[i];
+        const grossAmount = actualPerLevel;
+        const netAmount = grossAmount - config.gasFee;
+        
+        // ВСЕГДА начисляем gas fee
         await client.query(
-          'UPDATE user_balances SET balance = balance + $1 WHERE user_id = 1 AND crypto = $2',
-          [reserve, 'BRT']
+          'UPDATE user_balances SET balance = balance + $1 WHERE user_id = $2 AND crypto = $3',
+          [config.gasFee, gasFeeId, 'BRT']
         );
 
+        // ✅ ИСПРАВЛЕНО: gas_fee в transactions
         await client.query(
-          'INSERT INTO gs_transactions (from_user_id, to_user_id, program, amount, type) VALUES ($1, 1, $2, $3, $4)',
-          [userId, program, reserve, 'to_reserve']
+          'INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+          [userId, gasFeeId, 'BRT', config.gasFee, 'gas_fee', 'completed', JSON.stringify({program, level: i + 1})]
         );
+
+        // Если есть реферал
+        if (recipientId && recipientId !== adminId) {
+          await client.query(
+            'UPDATE user_balances SET balance = balance + $1 WHERE user_id = $2 AND crypto = $3',
+            [netAmount, recipientId, 'BRT']
+          );
+
+          // ✅ ИСПРАВЛЕНО: referral_commission в transactions
+          await client.query(
+            'INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [userId, recipientId, 'BRT', netAmount, 'club_avalanche_commission', 'completed', JSON.stringify({program, level: i + 1})]
+          );
+
+          totalToReferrals += netAmount;
+          console.log(`✅ Level ${i + 1}: ${netAmount.toFixed(2)} BRT → user ${recipientId}, gas: ${config.gasFee} BRT`);
+        } 
+        // Если реферала нет → на admin
+        else {
+          await client.query(
+            'UPDATE user_balances SET balance = balance + $1 WHERE user_id = $2 AND crypto = $3',
+            [netAmount, adminId, 'BRT']
+          );
+
+          // ✅ ИСПРАВЛЕНО: no_referrer в transactions
+          await client.query(
+            'INSERT INTO transactions (from_user_id, to_user_id, crypto, amount, type, status, metadata) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+            [userId, adminId, 'BRT', netAmount, 'club_avalanche_no_referrer', 'completed', JSON.stringify({program, level: i + 1})]
+          );
+
+          console.log(`✅ Level ${i + 1}: ${netAmount.toFixed(2)} BRT → admin (no referrer), gas: ${config.gasFee} BRT`);
+        }
+
+        totalPaid += grossAmount;
       }
+
+      console.log(`🎉 Total distributed: ${totalPaid.toFixed(2)} BRT of ${config.price} BRT`);
+      console.log(`   - To referrals: ${totalToReferrals.toFixed(2)} BRT`);
+      console.log(`   - Gas fees: ${(config.gasFee * config.levels).toFixed(2)} BRT`);
 
       res.json({
         success: true,
@@ -175,7 +262,7 @@ const joinProgram = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Join program error:', error);
+    console.error('❌ Join program error:', error);
     res.status(500).json({ error: error.message || 'Server error' });
   }
 };
@@ -202,16 +289,14 @@ const getStats = async (req, res) => {
   try {
     const userId = req.userId;
 
-    // Подсчет рефералов
     const referrals = await query(
       'SELECT COUNT(*) as total FROM gs_memberships WHERE referrer_id = $1',
       [userId]
     );
 
-    // Заработано BRT
     const earnings = await query(
-      'SELECT COALESCE(SUM(amount), 0) as total FROM gs_transactions WHERE to_user_id = $1 AND type = $2',
-      [userId, 'referral_commission']
+      'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE to_user_id = $1 AND type = $2',
+      [userId, 'club_avalanche_commission']
     );
 
     res.json({
