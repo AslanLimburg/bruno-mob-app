@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './CreateChallenge.css';
 
 function CreateChallenge() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ function CreateChallenge() {
     visibility: 'public'
   });
 
+  const [logo, setLogo] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -44,6 +47,38 @@ function CreateChallenge() {
     setFormData({ ...formData, options: newOptions });
   };
 
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Проверка типа файла
+      if (!file.type.startsWith('image/')) {
+        setMessage('⚠️ Please select an image file (PNG, JPG, GIF)');
+        return;
+      }
+      
+      // Проверка размера (макс 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage('⚠️ Image size must be less than 5MB');
+        return;
+      }
+      
+      setLogo(file);
+      
+      // Создать превью
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      setMessage('');
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogo(null);
+    setLogoPreview(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -52,25 +87,35 @@ function CreateChallenge() {
     try {
       const token = localStorage.getItem('token');
       
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        options: formData.options.filter(opt => opt.trim() !== ''),
-        payoutMode: formData.payoutMode,
-        minStake: parseFloat(formData.minStake),
-        maxStake: parseFloat(formData.maxStake),
-        allowCreatorParticipation: formData.allowCreatorParticipation,
-        visibility: formData.visibility
-      };
+      // Используем FormData для отправки файла
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('options', JSON.stringify(formData.options.filter(opt => opt.trim() !== '')));
+      formDataToSend.append('payoutMode', formData.payoutMode);
+      formDataToSend.append('minStake', parseFloat(formData.minStake));
+      formDataToSend.append('maxStake', parseFloat(formData.maxStake));
+      formDataToSend.append('allowCreatorParticipation', formData.allowCreatorParticipation);
+      formDataToSend.append('visibility', formData.visibility);
 
       if (formData.payoutMode === 'fixed_creator_prize') {
-        payload.creatorPrize = parseFloat(formData.creatorPrize);
+        formDataToSend.append('creatorPrize', parseFloat(formData.creatorPrize));
+      }
+
+      // Добавляем логотип если есть
+      if (logo) {
+        formDataToSend.append('logo', logo);
       }
 
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/challenge`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        formDataToSend,
+        { 
+          headers: { 
+            'Authorization': `Bearer ${token}`
+            // НЕ добавляем Content-Type! FormData сделает это автоматически
+          } 
+        }
       );
 
       setMessage('✅ Challenge created successfully!');
@@ -87,9 +132,11 @@ function CreateChallenge() {
         allowCreatorParticipation: true,
         visibility: 'public'
       });
+      setLogo(null);
+      setLogoPreview(null);
 
     } catch (error) {
-      setMessage(`❌ ${error.response?.data?.error || error.message}`);
+      setMessage(`❌ ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -123,6 +170,38 @@ function CreateChallenge() {
             placeholder="Provide details about your challenge..."
             rows="3"
           />
+        </div>
+
+        {/* Logo Upload */}
+        <div className="form-group">
+          <label>Challenge Logo (Optional)</label>
+          
+          {!logoPreview ? (
+            <div className="logo-upload-container">
+              <input
+                type="file"
+                id="logo-upload"
+                accept="image/*"
+                onChange={handleLogoChange}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="logo-upload" className="upload-button">
+                📷 Upload Logo
+              </label>
+              <p className="upload-hint">PNG, JPG, GIF (Max 5MB)</p>
+            </div>
+          ) : (
+            <div className="logo-preview-container">
+              <img src={logoPreview} alt="Logo preview" className="logo-preview" />
+              <button 
+                type="button" 
+                className="remove-logo-btn"
+                onClick={handleRemoveLogo}
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Options */}

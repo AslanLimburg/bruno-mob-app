@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const { uploadFile, deleteFile } = require('../utils/s3Upload');
 
 class ChallengeController {
   
@@ -21,6 +22,23 @@ class ChallengeController {
       }
       
       await client.query('BEGIN');
+      
+      // 🎨 ЗАГРУЗКА ЛОГОТИПА В S3
+      let logoUrl = null;
+      if (req.file) {
+        try {
+          logoUrl = await uploadFile(
+            req.file.buffer,
+            req.file.originalname,
+            'challenges/logos'
+          );
+          console.log(`✅ Logo uploaded to S3: ${logoUrl}`);
+        } catch (error) {
+          console.error('❌ Failed to upload logo:', error);
+          await client.query('ROLLBACK');
+          return res.status(500).json({ success: false, message: 'Failed to upload logo' });
+        }
+      }
       
       if (payoutMode === 'fixed_creator_prize') {
         if (!creatorPrize || creatorPrize <= 0) {
@@ -64,11 +82,11 @@ class ChallengeController {
         `INSERT INTO challenges (
           creator_id, title, description, payout_mode, creator_prize_reserved,
           min_stake, max_stake, allow_creator_participation,
-          open_accepting_at, close_accepting_at, visibility, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+          open_accepting_at, close_accepting_at, visibility, status, logo_url
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
         [creatorId, title, description, payoutMode, creatorPrize || 0, minStake || 1, maxStake,
          allowCreatorParticipation || false, openAcceptingAt || new Date(), closeAcceptingAt,
-         visibility || 'public', 'draft']
+         visibility || 'public', 'draft', logoUrl]
       );
       
       const challenge = challengeResult.rows[0];
@@ -83,13 +101,140 @@ class ChallengeController {
       
       await client.query('COMMIT');
       
-      console.log(`✅ Challenge created: ${challenge.id}, creator prize ${creatorPrize || 0} BRT sent to admin`);
+      console.log(`✅ Challenge created: ${challenge.id}, creator prize ${creatorPrize || 0} BRT sent to admin${logoUrl ? ', logo uploaded' : ''}`);
       
       res.json({ success: true, message: 'Challenge created successfully', data: { challenge, options: createdOptions } });
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Create challenge error:', error);
       res.status(500).json({ success: false, message: 'Failed to create challenge' });
+    } finally {
+      client.release();
+    }
+  }
+  
+  // UPDATE CHALLENGE LOGO
+  async updateChallengeLogo(req, res) {
+    const client = await pool.connect();
+    try {
+      const { challengeId } = req.params;
+      const userId = req.userId;
+      
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No logo file provided' });
+      }
+      
+      await client.query('BEGIN');
+      
+      // Проверяем права доступа
+      const challengeResult = await client.query(
+        'SELECT creator_id, logo_url FROM challenges WHERE id = $1',
+        [challengeId]
+      );
+      
+      if (challengeResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, message: 'Challenge not found' });
+      }
+      
+      const challenge = challengeResult.rows[0];
+      
+      if (challenge.creator_id !== userId) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ success: false, message: 'Only creator can update logo' });
+      }
+      
+      // Загружаем новый логотип
+      const newLogoUrl = await uploadFile(
+        req.file.buffer,
+        req.file.originalname,
+        'challenges/logos'
+      );
+      
+      // Удаляем старый логотип из S3 (если был)
+      if (challenge.logo_url && challenge.logo_url.includes('s3.twcstorage.ru')) {
+        try {
+          await deleteFile(challenge.logo_url);
+          console.log(`✅ Old logo deleted: ${challenge.logo_url}`);
+        } catch (error) {
+          console.error('❌ Failed to delete old logo:', error);
+          // Не прерываем выполнение
+        }
+      }
+      
+      // Обновляем URL логотипа в базе
+      await client.query(
+        'UPDATE challenges SET logo_url = $1, updated_at = NOW() WHERE id = $2',
+        [newLogoUrl, challengeId]
+      );
+      
+      await client.query('COMMIT');
+      
+      res.json({
+        success: true,
+        message: 'Logo updated successfully',
+        logoUrl: newLogoUrl
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Update logo error:', error);
+      res.status(500).json({ success: false, message: 'Failed to update logo' });
+    } finally {
+      client.release();
+    }
+  }
+  
+  // DELETE CHALLENGE LOGO
+  async deleteChallengeLogo(req, res) {
+    const client = await pool.connect();
+    try {
+      const { challengeId } = req.params;
+      const userId = req.userId;
+      
+      await client.query('BEGIN');
+      
+      const challengeResult = await client.query(
+        'SELECT creator_id, logo_url FROM challenges WHERE id = $1',
+        [challengeId]
+      );
+      
+      if (challengeResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, message: 'Challenge not found' });
+      }
+      
+      const challenge = challengeResult.rows[0];
+      
+      if (challenge.creator_id !== userId) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ success: false, message: 'Only creator can delete logo' });
+      }
+      
+      if (!challenge.logo_url) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, message: 'No logo to delete' });
+      }
+      
+      // Удаляем из S3
+      if (challenge.logo_url.includes('s3.twcstorage.ru')) {
+        await deleteFile(challenge.logo_url);
+      }
+      
+      // Обновляем базу
+      await client.query(
+        'UPDATE challenges SET logo_url = NULL, updated_at = NOW() WHERE id = $1',
+        [challengeId]
+      );
+      
+      await client.query('COMMIT');
+      
+      res.json({ success: true, message: 'Logo deleted successfully' });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Delete logo error:', error);
+      res.status(500).json({ success: false, message: 'Failed to delete logo' });
     } finally {
       client.release();
     }
@@ -407,15 +552,11 @@ class ChallengeController {
     }
   }
   
-  /**
-   * Ручная обработка выплат для челленджа
-   * POST /api/challenge/:challengeId/process-payouts
-   */
+  // PROCESS PAYOUTS
   async processPayouts(req, res) {
     try {
       const { challengeId } = req.params;
 
-      // Проверить, что челлендж существует и в статусе 'resolved'
       const challengeQuery = `
         SELECT * FROM challenges
         WHERE id = $1
@@ -435,7 +576,6 @@ class ChallengeController {
         });
       }
 
-      // Запустить ручную обработку
       const payoutScheduler = require('../services/payoutScheduler');
       const result = await payoutScheduler.triggerManualPayout(challengeId);
 
@@ -457,15 +597,11 @@ class ChallengeController {
     }
   }
 
-  /**
-   * Получить список выплат по челленджу
-   * GET /api/challenge/:challengeId/payouts
-   */
+  // GET CHALLENGE PAYOUTS
   async getChallengePayouts(req, res) {
     try {
       const { challengeId } = req.params;
 
-      // Получить все ставки с выплатами
       const query = `
         SELECT 
           b.id as bet_id,
@@ -492,7 +628,6 @@ class ChallengeController {
 
       const result = await pool.query(query, [challengeId]);
 
-      // Вычислить статистику
       const stats = {
         totalBets: result.rows.length,
         wonBets: result.rows.filter(b => b.bet_status === 'won').length,
@@ -605,6 +740,7 @@ class ChallengeController {
     }
   }
 
+  // GET CHALLENGE DISPUTES
   async getChallengeDisputes(req, res) {
     try {
       const { challengeId } = req.params;
@@ -656,6 +792,7 @@ class ChallengeController {
     }
   }
 
+  // RESOLVE DISPUTE
   async resolveDispute(req, res) {
     const client = await pool.connect();
     try {
@@ -729,13 +866,11 @@ class ChallengeController {
 
         for (const bet of previousPayouts.rows) {
           if (bet.status === 'won' && bet.payout) {
-            // Вычесть выплату из пользователя (отменить)
             await client.query(
               'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
               [bet.payout, bet.user_id, 'BRT']
             );
             
-            // Вернуть admin выплату
             await client.query(
               'UPDATE user_balances SET balance = balance + $1, updated_at = NOW() WHERE user_id = 1 AND crypto = $2',
               [bet.payout, 'BRT']
@@ -772,13 +907,11 @@ class ChallengeController {
           const balanceBefore = parseFloat(balanceResult.rows[0].balance);
           const balanceAfter = balanceBefore + parseFloat(bet.amount);
 
-          // Вернуть деньги пользователю
           await client.query(
             'UPDATE user_balances SET balance = $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
             [balanceAfter, bet.user_id, 'BRT']
           );
           
-          // Вычесть из admin
           await client.query(
             'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = 1 AND crypto = $2',
             [bet.amount, 'BRT']

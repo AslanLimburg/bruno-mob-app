@@ -135,10 +135,11 @@
 
 .user-email {
   font-size: 16px;
-  color: #ffffff !important;
+  color: #ffff00 !important;  /* Изменили с #ffffff на #ffff00 */
   font-weight: bold;
   letter-spacing: 1px;
   margin: 5px 0;
+  text-shadow: 0 0 10px #FFFFFF;  /* Добавили свечение как у ID */
 }
 
 .user-id {
