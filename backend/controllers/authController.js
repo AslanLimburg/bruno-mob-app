@@ -2,7 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { query } = require('../config/database');
-const { sendEmail } = require('../services/emailService');
+const { sendEmail, sendPasswordResetEmailResend } = require('../services/emailService');
 const { EXPIRY } = require('../config/constants');
 
 const generateToken = (userId) => {
@@ -182,7 +182,7 @@ class AuthController {
         );
 
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-        await sendEmail({ to: email, template: 'password_reset', data: { resetUrl, email } });
+        await sendPasswordResetEmailResend(email, user.name || 'User', resetUrl);
       }
 
       res.json({ success: true, message: 'If email exists, reset link sent' });

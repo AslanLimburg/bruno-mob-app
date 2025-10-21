@@ -65,11 +65,64 @@ const sendEmail = async ({ to, template, data }) => {
   }
 };
 
+const sendVerificationEmail = async (to, data) => {
+  return sendEmail({ to, template: 'email_verification', data });
+};
+
+const sendPasswordResetEmail = async (to, data) => {
+  return sendEmail({ to, template: 'password_reset', data });
+};
+
+// ==========================================
+// PASSWORD RESET (Resend)
+// ==========================================
+
+const sendPasswordResetEmailResend = async (userEmail, userName, resetUrl) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'BrunoToken <noreply@brunotoken.com>',
+      to: [userEmail],
+      subject: '🔐 Reset Your Password - BrunoToken',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #4F46E5;">🔐 Reset Your Password</h1>
+          <p>Hello ${userName || 'User'},</p>
+          <p>You requested to reset your password. Click the button below to create a new password:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+              Reset Password
+            </a>
+          </div>
+          <p style="color: #666; font-size: 14px;">Or copy this link to your browser:</p>
+          <p style="background: #F3F4F6; padding: 10px; border-radius: 4px; word-break: break-all; font-size: 12px;">
+            ${resetUrl}
+          </p>
+          <p style="color: #999; font-size: 12px; margin-top: 30px;">
+            This link will expire in 1 hour. If you didn't request this, please ignore this email.
+          </p>
+          <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 30px 0;">
+          <p style="color: #666; font-size: 12px; text-align: center;">BrunoToken Platform</p>
+        </div>
+      `
+    });
+
+    if (error) {
+      console.error('❌ Password reset email error:', error);
+      return { success: false, error };
+    }
+
+    console.log('✅ Password reset email sent:', data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error('❌ Email service error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // ==========================================
 // ФУНКЦИИ ДЛЯ SUPER ADMIN
 // ==========================================
 
-// Отправка уведомления о блокировке
 const sendBlockNotification = async (userEmail, reason, isBlacklisted = false) => {
     try {
         const subject = isBlacklisted 
@@ -80,7 +133,6 @@ const sendBlockNotification = async (userEmail, reason, isBlacklisted = false) =
             ? `Dear User,\n\nYour Bruno Token account (${userEmail}) has been permanently blacklisted.\n\nReason: ${reason}\n\nIf you believe this is a mistake, please contact our support team.\n\nBest regards,\nBruno Token Team`
             : `Dear User,\n\nYour Bruno Token account (${userEmail}) has been temporarily blocked.\n\nReason: ${reason}\n\nYou can contact our support team to resolve this issue.\n\nBest regards,\nBruno Token Team`;
 
-        // Логируем в консоль (development mode)
         console.log('\n========================================');
         console.log('📧 ADMIN NOTIFICATION (Development Mode)');
         console.log('========================================');
@@ -89,7 +141,6 @@ const sendBlockNotification = async (userEmail, reason, isBlacklisted = false) =
         console.log('Message:', message);
         console.log('========================================\n');
 
-        // Сохраняем в БД для истории
         await pool.query(
             `INSERT INTO email_notifications (email, subject, message, status) 
              VALUES ($1, $2, $3, 'sent')`,
@@ -103,13 +154,11 @@ const sendBlockNotification = async (userEmail, reason, isBlacklisted = false) =
     }
 };
 
-// Отправка уведомления о разблокировке
 const sendUnblockNotification = async (userEmail) => {
     try {
         const subject = 'Your Bruno Token Account Has Been Unblocked';
         const message = `Dear User,\n\nGood news! Your Bruno Token account (${userEmail}) has been unblocked.\n\nYou can now access all features of your account.\n\nBest regards,\nBruno Token Team`;
 
-        // Логируем в консоль
         console.log('\n========================================');
         console.log('📧 ADMIN NOTIFICATION (Development Mode)');
         console.log('========================================');
@@ -118,7 +167,6 @@ const sendUnblockNotification = async (userEmail) => {
         console.log('Message:', message);
         console.log('========================================\n');
 
-        // Сохраняем в БД
         await pool.query(
             `INSERT INTO email_notifications (email, subject, message, status) 
              VALUES ($1, $2, $3, 'sent')`,
@@ -136,7 +184,6 @@ const sendUnblockNotification = async (userEmail) => {
 // ФУНКЦИИ ДЛЯ VECTOR OF DESTINY (Resend)
 // ==========================================
 
-// Отправить прогноз пользователю
 const sendForecast = async (userEmail, userName, forecastText, language) => {
     try {
         console.log(`📧 Sending forecast to ${userEmail} (${language})...`);
@@ -179,29 +226,18 @@ const sendForecast = async (userEmail, userName, forecastText, language) => {
         
         if (error) {
             console.error('❌ Resend error:', error);
-            return {
-                success: false,
-                error: error.message
-            };
+            return { success: false, error: error.message };
         }
         
         console.log(`✅ Email sent successfully! ID: ${data.id}`);
-        
-        return {
-            success: true,
-            emailId: data.id
-        };
+        return { success: true, emailId: data.id };
         
     } catch (error) {
         console.error('❌ Send email error:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+        return { success: false, error: error.message };
     }
 };
 
-// Отправить приветственное письмо при подписке
 const sendWelcomeVectorDestiny = async (userEmail, userName) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -236,11 +272,11 @@ const sendWelcomeVectorDestiny = async (userEmail, userName) => {
         return { success: false, error: error.message };
     }
 };
+
 // ==========================================
 // ФУНКЦИИ ДЛЯ TRANSACTIONS
 // ==========================================
 
-// Уведомление об отправке криптовалюты
 const sendTransactionSent = async (userEmail, userName, amount, crypto, recipientEmail) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -276,7 +312,6 @@ const sendTransactionSent = async (userEmail, userName, amount, crypto, recipien
     }
 };
 
-// Уведомление о получении криптовалюты
 const sendTransactionReceived = async (userEmail, userName, amount, crypto, senderEmail) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -315,7 +350,6 @@ const sendTransactionReceived = async (userEmail, userName, amount, crypto, send
 // ФУНКЦИИ ДЛЯ LOTTERY
 // ==========================================
 
-// Уведомление об участии в лотерее
 const sendLotteryEntry = async (userEmail, userName, ticketCount, lotteryName) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -351,7 +385,6 @@ const sendLotteryEntry = async (userEmail, userName, ticketCount, lotteryName) =
     }
 };
 
-// Уведомление о выигрыше в лотерее
 const sendLotteryWin = async (userEmail, userName, prize, lotteryName) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -390,11 +423,39 @@ const sendLotteryWin = async (userEmail, userName, prize, lotteryName) => {
     }
 };
 
+const sendLotteryWinEmail = async (userEmail, userName, amount, lotteryName) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'BrunoToken <noreply@brunotoken.com>',
+      to: [userEmail],
+      subject: `🎉 Congratulations! You won ${amount} BRT in ${lotteryName}!`,
+      html: `
+        <h1>🎊 Congratulations, ${userName}!</h1>
+        <p>You won <strong>${amount} BRT</strong> in the <strong>${lotteryName}</strong> lottery!</p>
+        <p>The prize has been credited to your account.</p>
+        <p>Check your dashboard: <a href="https://brunotoken.com/dashboard">View Balance</a></p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">BrunoToken Platform</p>
+      `
+    });
+
+    if (error) {
+      console.error('❌ Lottery email error:', error);
+      return { success: false, error };
+    }
+
+    console.log('✅ Lottery win email sent:', data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error('❌ Email service error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // ==========================================
 // ФУНКЦИИ ДЛЯ CHALLENGE
 // ==========================================
 
-// Уведомление о новом челлендже
 const sendChallengeCreated = async (userEmail, userName, challengeTitle, stake, participants) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -430,7 +491,6 @@ const sendChallengeCreated = async (userEmail, userName, challengeTitle, stake, 
     }
 };
 
-// Уведомление о завершении челленджа
 const sendChallengeCompleted = async (userEmail, userName, challengeTitle, result, reward) => {
     try {
         const isWinner = result === 'won';
@@ -466,11 +526,67 @@ const sendChallengeCompleted = async (userEmail, userName, challengeTitle, resul
     }
 };
 
+const sendChallengeWinEmail = async (userEmail, userName, amount, challengeName) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'BrunoToken <noreply@brunotoken.com>',
+      to: [userEmail],
+      subject: `🏆 You won the "${challengeName}" challenge!`,
+      html: `
+        <h1>🏆 Congratulations, ${userName}!</h1>
+        <p>You won <strong>${amount} BRT</strong> in the challenge: <strong>${challengeName}</strong>!</p>
+        <p>The prize has been credited to your account.</p>
+        <p>Check your dashboard: <a href="https://brunotoken.com/dashboard">View Balance</a></p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">BrunoToken Platform</p>
+      `
+    });
+
+    if (error) {
+      console.error('❌ Challenge email error:', error);
+      return { success: false, error };
+    }
+
+    console.log('✅ Challenge win email sent:', data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error('❌ Email service error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+const sendChallengeNotification = async (userEmail, userName, challengeName, message, actionUrl) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'BrunoToken <noreply@brunotoken.com>',
+      to: [userEmail],
+      subject: `Challenge Update: ${challengeName}`,
+      html: `
+        <h1>Hello, ${userName}!</h1>
+        <p>${message}</p>
+        <p><a href="${actionUrl}" style="background: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Challenge</a></p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">BrunoToken Platform</p>
+      `
+    });
+
+    if (error) {
+      console.error('❌ Challenge notification error:', error);
+      return { success: false, error };
+    }
+
+    console.log('✅ Challenge notification sent:', data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error('❌ Email service error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // ==========================================
 // ФУНКЦИИ ДЛЯ REFERRAL
 // ==========================================
 
-// Уведомление о новом реферале
 const sendReferralSuccess = async (userEmail, userName, referredName, bonus) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -509,7 +625,6 @@ const sendReferralSuccess = async (userEmail, userName, referredName, bonus) => 
 // ФУНКЦИИ ДЛЯ CLUB AVALANCHE
 // ==========================================
 
-// Приветственное письмо при вступлении
 const sendClubAvalancheWelcome = async (userEmail, userName, program) => {
     try {
         const { data, error } = await resend.emails.send({
@@ -551,34 +666,123 @@ const sendClubAvalancheWelcome = async (userEmail, userName, program) => {
     }
 };
 
-module.exports = {
-    // Старые функции
-    sendEmail,
-    sendBlockNotification,
-    sendUnblockNotification,
-    // Новые функции для Vector of Destiny
-    sendForecast,
-    sendWelcomeVectorDestiny
+// ==========================================
+// ФУНКЦИЯ ДЛЯ VECTOR COLOR (еженедельная)
+// ==========================================
+
+const sendVectorColorEmail = async (userEmail, userName, colorName, colorHex, week) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Vector of Destiny <destiny@brunotoken.com>',
+      to: [userEmail],
+      subject: `🌈 Your Color of the Week: ${colorName}`,
+      html: `
+        <h1>🌈 Hello, ${userName}!</h1>
+        <p>Your color for Week ${week} is:</p>
+        <div style="background: ${colorHex}; padding: 40px; border-radius: 10px; text-align: center;">
+          <h2 style="color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">${colorName}</h2>
+        </div>
+        <p>Wear this color this week for good luck! ✨</p>
+        <p>Check your Vector: <a href="https://brunotoken.com/vector">View Details</a></p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">Vector of Destiny - BrunoToken</p>
+      `
+    });
+
+    if (error) {
+      console.error('❌ Vector email error:', error);
+      return { success: false, error };
+    }
+
+    console.log('✅ Vector color email sent:', data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error('❌ Email service error:', error);
+    return { success: false, error: error.message };
+  }
 };
+
+// ==========================================
+// ACTIVATION CODE EMAIL
+// ==========================================
+
+const sendActivationCodeEmail = async (userEmail, userName, activationCode, amountBRT, amountUSD) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'BrunoToken <noreply@brunotoken.com>',
+      to: [userEmail],
+      subject: `🎉 Your BRT Activation Code - ${amountBRT} BRT`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0;">🎉 Payment Successful!</h1>
+          </div>
+          
+          <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <p style="font-size: 16px; color: #333;">Hello ${userName},</p>
+            
+            <p style="font-size: 14px; color: #666;">Thank you for your purchase! Here is your activation code:</p>
+            
+            <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px dashed #667eea;">
+              <p style="font-size: 12px; color: #666; margin: 0 0 10px 0;">ACTIVATION CODE</p>
+              <p style="font-size: 24px; font-weight: bold; color: #667eea; margin: 0; letter-spacing: 2px; font-family: monospace;">${activationCode}</p>
+            </div>
+            
+            <div style="background: #EEF2FF; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Amount Paid:</strong> $${amountUSD}</p>
+              <p style="margin: 5px 0;"><strong>BRT Tokens:</strong> ${amountBRT} BRT</p>
+            </div>
+            
+            <p style="color: #666;">You can activate this code in your Dashboard → Coupon section.</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="http://localhost:3000/dashboard" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">Activate Now</a>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 30px 0;">
+            <p style="color: #999; font-size: 12px; text-align: center;">BrunoToken Platform</p>
+          </div>
+        </div>
+      `
+    });
+
+    if (error) {
+      console.error('❌ Activation code email error:', error);
+      return { success: false, error };
+    }
+
+    console.log('✅ Activation code email sent:', data.id);
+    return { success: true, messageId: data.id };
+  } catch (error) {
+    console.error('❌ Email service error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// ==========================================
+// EXPORT ALL FUNCTIONS
+// ==========================================
+
 module.exports = {
-    // Старые функции
     sendEmail,
+    sendVerificationEmail,
+    sendPasswordResetEmail,
+    sendPasswordResetEmailResend,
     sendBlockNotification,
     sendUnblockNotification,
-    // Vector of Destiny
     sendForecast,
     sendWelcomeVectorDestiny,
-    // Transactions
+    sendVectorColorEmail,
     sendTransactionSent,
     sendTransactionReceived,
-    // Lottery
     sendLotteryEntry,
     sendLotteryWin,
-    // Challenge
+    sendLotteryWinEmail,
     sendChallengeCreated,
     sendChallengeCompleted,
-    // Referral
+    sendChallengeWinEmail,
+    sendChallengeNotification,
     sendReferralSuccess,
-    // Club Avalanche
-    sendClubAvalancheWelcome
+    sendClubAvalancheWelcome,
+    sendActivationCodeEmail
 };

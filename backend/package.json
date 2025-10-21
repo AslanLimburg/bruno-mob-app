@@ -32,6 +32,7 @@
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.11.3",
     "resend": "^6.2.0",
+    "stripe": "^19.1.0",
     "suncalc": "^1.9.0"
   },
   "devDependencies": {

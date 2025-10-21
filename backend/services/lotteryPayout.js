@@ -1,4 +1,5 @@
 const { query, transaction } = require('../config/database');
+const { sendLotteryWinEmail } = require('../services/emailService');
 
 class LotteryPayout {
   async getJackpot() {
@@ -34,6 +35,20 @@ class LotteryPayout {
         let jackpotWon = false;
 
         for (const ticket of winners) {
+          // Get user info for email
+          const userResult = await client.query(
+            `SELECT id, name, email FROM users WHERE id = $1`,
+            [ticket.user_id]
+          );
+          const user = userResult.rows[0];
+
+          // Get lottery name
+          const lotteryResult = await client.query(
+            `SELECT name FROM lottery_draws WHERE draw_date = $1`,
+            [ticket.draw_date]
+          );
+          const lotteryName = lotteryResult.rows[0]?.name || 'Lottery Draw';
+
           // ✅ Admin платит 80% от prize_amount (вычет 20% комиссии)
           const fullPrize = parseFloat(ticket.prize_amount);
           const adminFee = fullPrize * 0.20; // 20% комиссия остаётся у admin
@@ -106,6 +121,22 @@ class LotteryPayout {
           }
 
           console.log(`✅ Paid ${actualPayout} BRT to user ${ticket.user_id} (full prize: ${fullPrize} BRT, admin fee: ${adminFee} BRT)`);
+
+          // 📧 Send email notification
+          try {
+            if (user && user.email) {
+              await sendLotteryWinEmail(
+                user.email,
+                user.name || 'Player',
+                actualPayout.toFixed(2),
+                lotteryName
+              );
+              console.log(`📧 Email sent to ${user.email}`);
+            }
+          } catch (emailError) {
+            console.error(`⚠️ Failed to send email to ${user?.email}:`, emailError.message);
+            // Continue processing even if email fails
+          }
         }
 
         // Update draw status

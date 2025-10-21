@@ -141,13 +141,38 @@ const fetchTransactions = async () => {
     return () => clearInterval(interval);
   }, [refreshUser]);
   
-  const handleRedeemCoupon = () => {
+  // ✅ ОБНОВЛЕННАЯ функция активации кода
+  const handleRedeemCoupon = async () => {
     if (!couponCode) {
-      addNotification("error", "Please enter a coupon code");
+      addNotification("error", "Please enter an activation code");
       return;
     }
-    addNotification("success", `Coupon ${couponCode} redeemed successfully! +100 BRT`);
-    setCouponCode("");
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/activation/redeem`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ code: couponCode })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        addNotification("success", data.message || `Code activated! ${data.data.brtAmount} BRT added`);
+        setCouponCode("");
+        await refreshUser();
+        await fetchTransactions();
+      } else {
+        addNotification("error", data.message || "Failed to activate code");
+      }
+    } catch (error) {
+      console.error('Redeem error:', error);
+      addNotification("error", "Failed to activate code");
+    }
   };
   
   const handleBuyTickets = () => {
@@ -159,8 +184,34 @@ const fetchTransactions = async () => {
     addNotification("success", `Purchased ${ticketCount} ticket(s) for ${cost} BRT!`);
   };
   
-  const handleBuyTokens = (amount, price) => {
-    addNotification("success", `Purchase initiated: ${amount} BRT for $${price}`);
+  // ✅ ОБНОВЛЕННАЯ функция покупки токенов через Stripe
+  const handleBuyTokens = async (packageType, price, brt) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/stripe/create-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          packageType: packageType,
+          email: user?.email
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        addNotification("error", "Failed to create checkout session");
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      addNotification("error", "Failed to initiate purchase");
+    }
   };
   
   const handleBuyMembership = (tier, price) => {
@@ -319,36 +370,45 @@ const fetchTransactions = async () => {
           </div>
         )}
         
-        {/* Shop Tab */}
+        {/* Shop Tab - ОБНОВЛЕНО */}
         {activeTab==="shop" && (
           <div className="shop-section">
             <h3>💎 Buy BRT Tokens</h3>
             <div className="shop-grid">
               <div className="shop-card">
                 <span className="shop-icon">🌟</span>
-                <h4>Starter Pack</h4>
-                <div className="shop-amount">1,000 BRT</div>
-                <div className="shop-price">$99</div>
-                <button onClick={()=>handleBuyTokens(1000, 99)} className="btn-buy">Buy Now</button>
+                <h4>Basic Package</h4>
+                <div className="shop-amount">5.5 BRT</div>
+                <div className="shop-price">$7</div>
+                <button onClick={()=>handleBuyTokens('basic', 7, 5.5)} className="btn-buy">Buy Now</button>
+              </div>
+              
+              <div className="shop-card">
+                <span className="shop-icon">💰</span>
+                <h4>Silver Package</h4>
+                <div className="shop-amount">51 BRT</div>
+                <div className="shop-price">$61</div>
+                <div className="shop-save">+1 BRT Bonus!</div>
+                <button onClick={()=>handleBuyTokens('silver', 61, 51)} className="btn-buy">Buy Now</button>
               </div>
               
               <div className="shop-card featured">
                 <span className="shop-badge">BEST VALUE</span>
                 <span className="shop-icon">⭐</span>
-                <h4>Pro Pack</h4>
-                <div className="shop-amount">5,000 BRT</div>
-                <div className="shop-price">$450</div>
-                <div className="shop-save">Save $50!</div>
-                <button onClick={()=>handleBuyTokens(5000, 450)} className="btn-buy">Buy Now</button>
+                <h4>Gold Package</h4>
+                <div className="shop-amount">501 BRT</div>
+                <div className="shop-price">$600</div>
+                <div className="shop-save">+1 BRT Bonus!</div>
+                <button onClick={()=>handleBuyTokens('gold', 600, 501)} className="btn-buy">Buy Now</button>
               </div>
               
               <div className="shop-card">
                 <span className="shop-icon">💎</span>
-                <h4>Elite Pack</h4>
-                <div className="shop-amount">10,000 BRT</div>
-                <div className="shop-price">$850</div>
-                <div className="shop-save">Save $150!</div>
-                <button onClick={()=>handleBuyTokens(10000, 850)} className="btn-buy">Buy Now</button>
+                <h4>Platinum Package</h4>
+                <div className="shop-amount">1,001 BRT</div>
+                <div className="shop-price">$1,200</div>
+                <div className="shop-save">+1 BRT Bonus!</div>
+                <button onClick={()=>handleBuyTokens('platinum', 1200, 1001)} className="btn-buy">Buy Now</button>
               </div>
             </div>
             
@@ -408,42 +468,50 @@ const fetchTransactions = async () => {
           </div>
         )}
         
-        {/* Coupons Tab */}
+        {/* Coupons Tab - ОБНОВЛЕНО */}
         {activeTab==="coupons" && (
           <div className="coupons-section">
-            <h3>🎫 Redeem Coupon</h3>
+            <h3>🎫 Redeem Activation Code</h3>
             
             <div className="coupon-redeem-section">
-              <h4>Enter Coupon Code</h4>
+              <h4>Enter Activation Code</h4>
               <div className="coupon-input-group">
                 <input 
                   type="text" 
                   value={couponCode} 
                   onChange={(e)=>setCouponCode(e.target.value.toUpperCase())} 
-                  placeholder="ENTER CODE"
+                  placeholder="BRT-XXXXXXXXXXXX"
                   className="coupon-input"
                   maxLength={20}
                 />
-                <button onClick={handleRedeemCoupon} className="btn-redeem">Redeem</button>
+                <button onClick={handleRedeemCoupon} className="btn-redeem">Activate</button>
               </div>
-              <p className="coupon-info">Enter your promotional code to receive bonuses or discounts</p>
+              <p className="coupon-info">Enter your activation code to receive BRT tokens instantly</p>
             </div>
             
-            <h4>Your Coupons</h4>
-            <div className="coupons-list">
-              {mockCoupons.map(coupon => (
-                <div key={coupon.id} className={`coupon-card ${coupon.used?"used":""}`}>
-                  <span className={`coupon-badge ${coupon.used?"used-badge":coupon.type}`}>
-                    {coupon.used?"USED":coupon.type.toUpperCase()}
-                  </span>
-                  <div className="coupon-code-text">{coupon.code}</div>
-                  <div className="coupon-details">
-                    <span className="coupon-value">{coupon.discount}</span>
-                    <span className="coupon-expires">Expires: {coupon.expires}</span>
+            <h4>Your Activation Codes</h4>
+            {mockCoupons.length === 0 ? (
+              <div className="empty-state">
+                <div style={{fontSize: '48px', marginBottom: '20px'}}>🎫</div>
+                <div>No activation codes yet</div>
+                <div className="empty-subtitle">Purchase BRT tokens to receive activation codes via email</div>
+              </div>
+            ) : (
+              <div className="coupons-list">
+                {mockCoupons.map(coupon => (
+                  <div key={coupon.id} className={`coupon-card ${coupon.used?"used":""}`}>
+                    <span className={`coupon-badge ${coupon.used?"used-badge":"bonus"}`}>
+                      {coupon.used?"USED":"ACTIVE"}
+                    </span>
+                    <div className="coupon-code-text">{coupon.code}</div>
+                    <div className="coupon-details">
+                      <span className="coupon-value">{coupon.discount}</span>
+                      <span className="coupon-expires">Expires: {coupon.expires}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
         
