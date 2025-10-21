@@ -11,6 +11,9 @@ import ModeratorDashboard from '../admin/ModeratorDashboard';
 import Messenger from '../messenger/Messenger';
 import StarsChallenge from '../stars-challenge/StarsChallenge';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const mockCoupons = [
   {id:1,code:"WELCOME100",discount:"100 BRT",type:"bonus",expires:"2025-12-31",used:false},
@@ -35,8 +38,72 @@ const Dashboard = ({addNotification}) => {
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [localBalance, setLocalBalance] = useState(0);
+  const [kycStatus, setKycStatus] = useState(null); // 🆕 KYC Status
   
   const referralCode = user?.referralCode || "BRT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  
+  // 🆕 Fetch KYC Status
+  useEffect(() => {
+    const fetchKYCStatus = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `${API_URL}/upload/verification/status`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setKycStatus(response.data);
+      } catch (error) {
+        console.error('Failed to fetch KYC status:', error);
+      }
+    };
+    
+    if (user?.id) {
+      fetchKYCStatus();
+    }
+  }, [user?.id]);
+  
+  // 🆕 Get KYC Badge
+  const getKYCBadge = () => {
+    if (!kycStatus) {
+      return {
+        icon: '⚪',
+        text: 'KYC',
+        class: 'kyc-not-started',
+        tooltip: 'Verification not started'
+      };
+    }
+
+    const badges = {
+      not_started: {
+        icon: '⚪',
+        text: 'KYC',
+        class: 'kyc-not-started',
+        tooltip: 'Verification not started'
+      },
+      pending: {
+        icon: '🟡',
+        text: 'KYC',
+        class: 'kyc-pending',
+        tooltip: 'Pending review'
+      },
+      verified: {
+        icon: '🟢',
+        text: 'KYC',
+        class: 'kyc-verified',
+        tooltip: 'Verified'
+      },
+      rejected: {
+        icon: '🔴',
+        text: 'KYC',
+        class: 'kyc-rejected',
+        tooltip: 'Rejected'
+      }
+    };
+
+    return badges[kycStatus.status] || badges.not_started;
+  };
+  
+  const kycBadge = getKYCBadge();
   
   // Синхронизировать localBalance с user.balances.BRT
   useEffect(() => {
@@ -247,6 +314,19 @@ const fetchTransactions = async () => {
         </div>
         
         <div className="header-actions">
+          {/* 🆕 KYC BADGE */}
+          <button 
+            onClick={() => navigate('/verification')} 
+            className={`btn-kyc ${kycBadge.class}`}
+            title={kycBadge.tooltip}
+          >
+            <span className="kyc-icon">{kycBadge.icon}</span>
+            <span className="kyc-text">{kycBadge.text}</span>
+            {kycStatus?.stats.pending > 0 && (
+              <span className="kyc-counter">{kycStatus.stats.pending}</span>
+            )}
+          </button>
+          
           <button onClick={()=>setIsSendModalOpen(true)} className="btn-action">Send</button>
           <button onClick={()=>setIsReceiveModalOpen(true)} className="btn-action">Receive</button>
           <button onClick={()=>setIsSwapModalOpen(true)} className="btn-action">Swap</button>

@@ -139,7 +139,7 @@
   font-weight: bold;
   letter-spacing: 1px;
   margin: 5px 0;
-  text-shadow: 0 0 10px #FFFFFF;  /* Добавили свечение как у ID */
+  text-shadow: 0 0 10px #fb0505;  /* Добавили свечение как у ID */
 }
 
 .user-id {
@@ -1668,4 +1668,105 @@
   margin-left: auto;
   font-size: 32px;
   font-weight: bold;
+}
+/* KYC Badge Styles */
+.btn-kyc {
+  position: relative;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid;
+}
+
+.kyc-icon {
+  font-size: 1.2rem;
+}
+
+.kyc-text {
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+.kyc-not-started {
+  background: rgba(128, 128, 128, 0.1);
+  border-color: rgba(128, 128, 128, 0.3);
+  color: #999;
+}
+
+.kyc-not-started:hover {
+  background: rgba(128, 128, 128, 0.2);
+  border-color: rgba(128, 128, 128, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(128, 128, 128, 0.2);
+}
+
+.kyc-pending {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.4);
+  color: #FFC107;
+  animation: pulse-yellow 2s infinite;
+}
+
+.kyc-pending:hover {
+  background: rgba(255, 193, 7, 0.2);
+  border-color: #FFC107;
+  transform: translateY(-2px);
+}
+
+.kyc-verified {
+  background: rgba(76, 175, 80, 0.1);
+  border-color: rgba(76, 175, 80, 0.4);
+  color: #4CAF50;
+}
+
+.kyc-verified:hover {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: #4CAF50;
+  transform: translateY(-2px);
+}
+
+.kyc-rejected {
+  background: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.4);
+  color: #F44336;
+  animation: pulse-red 2s infinite;
+}
+
+.kyc-rejected:hover {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #F44336;
+  transform: translateY(-2px);
+}
+
+.kyc-counter {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #F44336, #d32f2f);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes pulse-yellow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 193, 7, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(255, 193, 7, 0.6); }
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 10px rgba(244, 67, 54, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.6); }
 }

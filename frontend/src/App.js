@@ -14,6 +14,7 @@ import Referral from "./components/referral/Referral";
 import Lottery from "./components/lottery/Lottery";
 import SuperAdminPanel from "./components/super-admin/SuperAdminPanel";
 import VectorDestiny from "./components/VectorDestiny/VectorDestiny";
+import Verification from "./components/verification/Verification"; // 🆕 KYC страница
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -196,6 +197,17 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        
+        {/* 🆕 KYC/AML VERIFICATION PAGE */}
+        <Route
+          path="/verification"
+          element={
+            <ProtectedRoute>
+              <Verification addNotification={addNotification} />
+            </ProtectedRoute>
+          }
+        />
+        
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </>

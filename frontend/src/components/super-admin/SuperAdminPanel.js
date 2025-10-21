@@ -12,6 +12,7 @@ import TransactionsView from './TransactionsView';
 import ReferralsTree from './ReferralsTree';
 import LogsView from './LogsView';
 import BlacklistManagement from './BlacklistManagement';
+import KYCManagement from './KYCManagement'; // 🆕 KYC компонент
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -39,7 +40,8 @@ const SuperAdminPanel = ({ addNotification }) => {
         { id: 'transactions', name: '💳 Transactions', icon: '💳' },
         { id: 'referrals', name: '🔗 Referrals', icon: '🔗' },
         { id: 'logs', name: '📋 Logs', icon: '📋' },
-        { id: 'blacklist', name: '🚫 Blacklist', icon: '🚫' }
+        { id: 'blacklist', name: '🚫 Blacklist', icon: '🚫' },
+        { id: 'kyc', name: '🔐 KYC', icon: '🔐' } // 🆕 ДОБАВИЛИ ТАБЛИЦУ KYC
     ];
 
     const renderContent = () => {
@@ -60,6 +62,8 @@ const SuperAdminPanel = ({ addNotification }) => {
                 return <LogsView />;
             case 'blacklist':
                 return <BlacklistManagement />;
+            case 'kyc': // 🆕 РЕНДЕРИМ KYC КОМПОНЕНТ
+                return <KYCManagement addNotification={addNotification} />;
             default:
                 return <Dashboard />;
         }

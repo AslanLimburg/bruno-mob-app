@@ -21,6 +21,7 @@ const vectorDestinyRoutes = require('./routes/vectorDestiny');
 const walletRoutes = require('./routes/walletRoutes');
 const stripeRoutes = require('./routes/stripeRoutes');
 const activationRoutes = require('./routes/activationRoutes');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -62,6 +63,7 @@ app.use('/api/vector', vectorDestinyRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/activation', activationRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Запустить Unified Scheduler
 startAllSchedulers();
