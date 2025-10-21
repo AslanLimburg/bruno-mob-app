@@ -188,6 +188,65 @@ class StripeController {
       });
     }
   }
+// TEST ONLY: Симуляция webhook для разработки
+  static async testWebhook(req, res) {
+    try {
+      const { email, packageType } = req.body;
+      
+      // Генерируем уникальный код активации
+      let code;
+      let isUnique = false;
+      
+      while (!isUnique) {
+        code = generateActivationCode();
+        const existing = await query(
+          'SELECT id FROM activation_codes WHERE code = $1',
+          [code]
+        );
+        if (existing.rows.length === 0) {
+          isUnique = true;
+        }
+      }
+
+      const packages = {
+        basic: { price: 7, brt: 5.5 },
+        silver: { price: 61, brt: 51 },
+        gold: { price: 600, brt: 501 },
+        platinum: { price: 1200, brt: 1001 }
+      };
+
+      const pkg = packages[packageType] || packages.basic;
+      const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+      await query(
+        `INSERT INTO activation_codes 
+         (code, amount_usd, amount_brt, stripe_payment_id, stripe_session_id, 
+          buyer_email, status, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'sent', $7)`,
+        [
+          code,
+          pkg.price,
+          pkg.brt,
+          'test_payment',
+          'test_session',
+          email,
+          expiresAt
+        ]
+      );
+
+      console.log(`✅ TEST: Activation code created: ${code}`);
+      
+      res.json({ 
+        success: true, 
+        code: code,
+        amount_brt: pkg.brt,
+        message: 'Test code created successfully' 
+      });
+    } catch (error) {
+      console.error('Test webhook error:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = StripeController;

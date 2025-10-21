@@ -11,4 +11,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), StripeControl
 // Получить информацию о сессии (временно без auth для теста)
 router.get('/session/:sessionId', StripeController.getSession);
 
+// TEST ONLY - remove in production
+router.post('/test-webhook', StripeController.testWebhook);
+
 module.exports = router;

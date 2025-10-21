@@ -2,6 +2,15 @@
    SUPER ADMIN PANEL - MAIN STYLES
    ============================================ */
 
+/* ==========================================
+   GLOBAL TEXT COLOR - BLACK
+   ========================================== */
+
+.super-admin-container,
+.super-admin-container *:not(button):not(.badge):not(.role-badge) {
+    color: #000000 !important;
+}
+
 .super-admin-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -25,12 +34,12 @@
 .header-left h1 {
     margin: 0;
     font-size: 1.8rem;
-    color: #1e3c72;
+    color: #000000 !important;
     font-weight: 700;
 }
 
 .header-subtitle {
-    color: #666;
+    color: #000000 !important;
     font-size: 0.9rem;
     display: block;
     margin-top: 0.3rem;
@@ -43,14 +52,14 @@
 }
 
 .admin-email {
-    color: #333;
+    color: #000000 !important;
     font-weight: 500;
     font-size: 0.95rem;
 }
 
 .logout-btn {
     background: #dc3545;
-    color: white;
+    color: white !important;
     border: none;
     padding: 0.6rem 1.5rem;
     border-radius: 8px;
@@ -104,7 +113,7 @@
     transition: all 0.3s;
     text-align: left;
     font-size: 1rem;
-    color: #333;
+    color: #000000 !important;
 }
 
 .sidebar-item:hover {
@@ -114,7 +123,7 @@
 
 .sidebar-item.active {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
+    color: white !important;
     box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
 }
 
@@ -146,10 +155,12 @@
 }
 
 .dashboard-title {
-    color: white;
+    color: #000000 !important;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1rem;
+    border-radius: 8px;
     font-size: 2rem;
     margin-bottom: 2rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .stats-grid {
@@ -183,7 +194,7 @@
 .stat-content h3 {
     margin: 0;
     font-size: 0.9rem;
-    color: #666;
+    color: #000000 !important;
     font-weight: 500;
 }
 
@@ -191,12 +202,12 @@
     font-size: 2rem;
     font-weight: 700;
     margin: 0.5rem 0;
-    color: #1e3c72;
+    color: #000000 !important;
 }
 
 .stat-subtitle {
     font-size: 0.8rem;
-    color: #999;
+    color: #000000 !important;
 }
 
 /* Stat card variants */
@@ -218,15 +229,17 @@
 }
 
 .management-header h2 {
-    color: white;
+    color: #000000 !important;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1rem;
+    border-radius: 8px;
     font-size: 1.8rem;
     margin: 0;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .refresh-btn, .add-btn {
     background: white;
-    color: #1e3c72;
+    color: #000000 !important;
     border: none;
     padding: 0.7rem 1.5rem;
     border-radius: 8px;
@@ -264,6 +277,8 @@
     transition: all 0.3s;
     flex: 1;
     min-width: 200px;
+    color: #000000 !important;
+    background: white !important;
 }
 
 .search-input:focus, .filter-select:focus {
@@ -274,7 +289,7 @@
 
 .clear-filters-btn {
     background: #6c757d;
-    color: white;
+    color: white !important;
     border: none;
     padding: 0.7rem 1.5rem;
     border-radius: 8px;
@@ -307,7 +322,6 @@
 .users-table thead, .balances-table thead, .transactions-table thead,
 .referrals-table thead, .logs-table thead, .blacklist-table thead {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
 }
 
 .users-table th, .balances-table th, .transactions-table th,
@@ -316,6 +330,7 @@
     text-align: left;
     font-weight: 600;
     font-size: 0.9rem;
+    color: white !important;
 }
 
 .users-table td, .balances-table td, .transactions-table td,
@@ -323,6 +338,7 @@
     padding: 1rem;
     border-bottom: 1px solid #e0e0e0;
     font-size: 0.9rem;
+    color: #000000 !important;
 }
 
 .users-table tbody tr:hover, .balances-table tbody tr:hover,
@@ -332,14 +348,14 @@
 }
 
 .user-email {
-    color: #1e3c72;
+    color: #000000 !important;
     font-weight: 500;
 }
 
 .balance-cell, .amount-cell {
     font-family: 'Courier New', monospace;
     font-weight: 600;
-    color: #28a745;
+    color: #000000 !important;
 }
 
 .actions-cell {
@@ -357,26 +373,27 @@
     font-size: 0.8rem;
     font-weight: 600;
     display: inline-block;
+    color: white !important;
 }
 
 .badge-success {
-    background: #d4edda;
-    color: #155724;
+    background: #28a745 !important;
+    color: white !important;
 }
 
 .badge-warning {
-    background: #fff3cd;
-    color: #856404;
+    background: #ffc107 !important;
+    color: #000000 !important;
 }
 
 .badge-danger {
-    background: #f8d7da;
-    color: #721c24;
+    background: #dc3545 !important;
+    color: white !important;
 }
 
 .badge-secondary {
-    background: #e2e3e5;
-    color: #383d41;
+    background: #6c757d !important;
+    color: white !important;
 }
 
 .role-badge {
@@ -385,12 +402,29 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
+    color: white !important;
 }
 
-.role-user { background: #e7f3ff; color: #004085; }
-.role-moderator { background: #fff3cd; color: #856404; }
-.role-admin { background: #f8d7da; color: #721c24; }
-.role-super_admin { background: #d1ecf1; color: #0c5460; }
+.role-user { 
+    background: #007bff !important; 
+    color: white !important;
+}
+.role-moderator { 
+    background: #ffc107 !important; 
+    color: #000000 !important;
+}
+.role-admin { 
+    background: #dc3545 !important; 
+    color: white !important;
+}
+.role-super_admin { 
+    background: #17a2b8 !important; 
+    color: white !important;
+}
+.role-system {
+    background: #6c757d !important;
+    color: white !important;
+}
 
 /* ============================================
    BUTTONS
@@ -403,31 +437,32 @@
     cursor: pointer;
     font-size: 1rem;
     transition: all 0.3s;
+    color: white !important;
 }
 
 .btn-warning {
     background: #ffc107;
-    color: #000;
+    color: #000000 !important;
 }
 
 .btn-danger {
     background: #dc3545;
-    color: white;
+    color: white !important;
 }
 
 .btn-success {
     background: #28a745;
-    color: white;
+    color: white !important;
 }
 
 .btn-info {
     background: #17a2b8;
-    color: white;
+    color: white !important;
 }
 
 .btn-primary {
     background: #007bff;
-    color: white;
+    color: white !important;
 }
 
 .action-btn-small:hover {
@@ -449,7 +484,7 @@
 
 .pagination-btn {
     background: white;
-    color: #1e3c72;
+    color: #000000 !important;
     border: 2px solid #1e3c72;
     padding: 0.7rem 1.5rem;
     border-radius: 8px;
@@ -460,7 +495,7 @@
 
 .pagination-btn:hover:not(:disabled) {
     background: #1e3c72;
-    color: white;
+    color: white !important;
 }
 
 .pagination-btn:disabled {
@@ -469,9 +504,11 @@
 }
 
 .pagination-info {
-    color: white;
+    color: #000000 !important;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
     font-weight: 500;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* ============================================
@@ -512,7 +549,7 @@
 
 .modal-header h3 {
     margin: 0;
-    color: #1e3c72;
+    color: #000000 !important;
     font-size: 1.5rem;
 }
 
@@ -521,17 +558,24 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #999;
+    color: #999 !important;
     transition: all 0.3s;
 }
 
 .close-btn:hover {
-    color: #333;
+    color: #000000 !important;
     transform: rotate(90deg);
 }
 
 .modal-body {
     padding: 2rem;
+}
+
+.modal-body p,
+.modal-body strong,
+.user-details p,
+.user-details strong {
+    color: #000000 !important;
 }
 
 .modal-footer {
@@ -550,7 +594,7 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #333;
+    color: #000000 !important;
 }
 
 .form-input, .form-select, .reason-textarea {
@@ -560,6 +604,8 @@
     border-radius: 8px;
     font-size: 0.95rem;
     transition: all 0.3s;
+    color: #000000 !important;
+    background: white !important;
 }
 
 .form-input:focus, .form-select:focus, .reason-textarea:focus {
@@ -570,7 +616,7 @@
 
 .btn-secondary {
     background: #6c757d;
-    color: white;
+    color: white !important;
     border: none;
     padding: 0.8rem 1.5rem;
     border-radius: 8px;
@@ -583,6 +629,11 @@
     background: #5a6268;
 }
 
+.warning-text {
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+
 /* ============================================
    LOADING & ERRORS
    ============================================ */
@@ -593,12 +644,17 @@
     align-items: center;
     justify-content: center;
     padding: 4rem;
-    color: white;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+}
+
+.loading-container p {
+    color: #000000 !important;
 }
 
 .spinner {
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid white;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #1e3c72;
     border-radius: 50%;
     width: 50px;
     height: 50px;
@@ -618,9 +674,13 @@
     text-align: center;
 }
 
+.dashboard-error p {
+    color: #000000 !important;
+}
+
 .retry-btn {
     background: #1e3c72;
-    color: white;
+    color: white !important;
     border: none;
     padding: 0.8rem 2rem;
     border-radius: 8px;
@@ -632,6 +692,18 @@
 
 .retry-btn:hover {
     background: #2a5298;
+}
+
+.empty-state {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 3rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.empty-state p {
+    color: #000000 !important;
+    font-size: 1.2rem;
 }
 
 /* ============================================
@@ -647,7 +719,7 @@
 }
 
 .section-title {
-    color: #1e3c72;
+    color: #000000 !important;
     font-size: 1.3rem;
     margin-bottom: 1.5rem;
     font-weight: 700;
@@ -677,7 +749,7 @@
 .club-count {
     font-size: 2rem;
     font-weight: 700;
-    color: #1e3c72;
+    color: #000000 !important;
     margin: 0.5rem 0;
 }
 
@@ -694,6 +766,10 @@
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
+}
+
+.status-item * {
+    color: #000000 !important;
 }
 
 .status-dot {
@@ -715,7 +791,7 @@
 
 .tab-btn {
     background: white;
-    color: #1e3c72;
+    color: #000000 !important;
     border: 2px solid white;
     padding: 0.8rem 2rem;
     border-radius: 8px;
@@ -726,7 +802,7 @@
 
 .tab-btn.active {
     background: #1e3c72;
-    color: white;
+    color: white !important;
     border-color: #1e3c72;
 }
 

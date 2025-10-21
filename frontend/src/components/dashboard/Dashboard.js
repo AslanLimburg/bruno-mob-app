@@ -142,7 +142,7 @@ const fetchTransactions = async () => {
   }, [refreshUser]);
   
   // ✅ ОБНОВЛЕННАЯ функция активации кода
-  const handleRedeemCoupon = async () => {
+ const handleRedeemCoupon = async () => {
     if (!couponCode) {
       addNotification("error", "Please enter an activation code");
       return;
@@ -164,8 +164,16 @@ const fetchTransactions = async () => {
       if (data.success) {
         addNotification("success", data.message || `Code activated! ${data.data.brtAmount} BRT added`);
         setCouponCode("");
+        
+        // Обновляем данные
         await refreshUser();
         await fetchTransactions();
+        
+        // ✅ ПРИНУДИТЕЛЬНОЕ обновление баланса
+        if (user?.balances?.BRT !== undefined) {
+          const newBalance = user.balances.BRT + data.data.brtAmount;
+          setLocalBalance(newBalance);
+        }
       } else {
         addNotification("error", data.message || "Failed to activate code");
       }

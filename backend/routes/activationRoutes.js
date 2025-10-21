@@ -1,16 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const ActivationController = require('../controllers/activationController');
+const jwt = require('jsonwebtoken');
 
-// Временный middleware (TODO: использовать настоящий JWT)
+// Настоящий JWT middleware
 const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
   if (!token) {
     return res.status(401).json({ success: false, message: 'No token provided' });
   }
-  // TODO: верифицировать токен
-  req.userId = 1; // временно
-  next();
+
+  jwt.verify(token, process.env.JWT_SECRET || 'secret', (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ success: false, message: 'Invalid token' });
+    }
+    req.userId = decoded.userId;
+    next();
+  });
 };
 
 // Все роуты требуют авторизации

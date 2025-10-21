@@ -42,11 +42,16 @@ const UsersManagement = () => {
                 ...filters
             });
 
+            console.log('🔍 Fetching users...');
             const response = await axios.get(`${API_URL}/super-admin/users?${params}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
+            console.log('✅ Response:', response.data);
+
             if (response.data.success) {
+                console.log('✅ Users loaded:', response.data.data.length, 'users');
+                console.log('First user:', response.data.data[0]);
                 setUsers(response.data.data);
                 setPagination(prev => ({
                     ...prev,
@@ -54,7 +59,7 @@ const UsersManagement = () => {
                 }));
             }
         } catch (err) {
-            console.error('Fetch users error:', err);
+            console.error('❌ Fetch users error:', err);
         } finally {
             setLoading(false);
         }
@@ -139,6 +144,8 @@ const UsersManagement = () => {
         return <span className="badge badge-success">✅ Active</span>;
     };
 
+    console.log('🎨 Rendering UsersManagement. Users:', users.length, 'Loading:', loading);
+
     return (
         <div className="users-management">
             <div className="management-header">
@@ -192,6 +199,10 @@ const UsersManagement = () => {
                 <div className="loading-container">
                     <div className="spinner"></div>
                     <p>Loading users...</p>
+                </div>
+            ) : users.length === 0 ? (
+                <div className="empty-state">
+                    <p>No users found</p>
                 </div>
             ) : (
                 <>

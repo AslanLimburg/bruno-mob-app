@@ -7,12 +7,30 @@ class ActivationController {
       const { code } = req.body;
       const userId = req.userId; // из JWT middleware
 
+      console.log('🔍 Redeem attempt:', { 
+        code, 
+        userId, 
+        body: req.body,
+        headers: req.headers.authorization ? 'Token present' : 'No token'
+      });
+
       if (!code) {
+        console.log('❌ No code provided');
         return res.status(400).json({ 
           success: false, 
           message: 'Activation code required' 
         });
       }
+
+      if (!userId) {
+        console.log('❌ No userId from JWT');
+        return res.status(401).json({ 
+          success: false, 
+          message: 'Authentication required' 
+        });
+      }
+
+      console.log('🔍 Checking code in DB:', code.trim().toUpperCase());
 
       // Проверяем код в транзакции
       const result = await transaction(async (client) => {
@@ -24,11 +42,37 @@ class ActivationController {
           [code.trim().toUpperCase()]
         );
 
+        console.log('📊 Code query result:', codeResult.rows.length, 'rows');
+
         if (codeResult.rows.length === 0) {
+          // Проверим почему не найден
+          const checkResult = await client.query(
+            `SELECT code, status, expires_at, expires_at > NOW() as is_valid 
+             FROM activation_codes WHERE code = $1`,
+            [code.trim().toUpperCase()]
+          );
+          
+          console.log('🔍 Code check:', checkResult.rows);
           throw new Error('Invalid, expired, or already used code');
         }
 
         const activationCode = codeResult.rows[0];
+        console.log('✅ Code found:', activationCode.code, 'Amount:', activationCode.amount_brt);
+
+        // ✅ НОВОЕ: Списываем BRT с treasury аккаунта (user_id = 17)
+        const treasuryResult = await client.query(
+          `UPDATE user_balances 
+           SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP
+           WHERE user_id = 17 AND crypto = 'BRT'
+           RETURNING balance`,
+          [activationCode.amount_brt]
+        );
+
+        if (treasuryResult.rows.length === 0) {
+          throw new Error('Treasury account not found or insufficient balance');
+        }
+
+        console.log('✅ BRT deducted from treasury. New balance:', parseFloat(treasuryResult.rows[0].balance).toFixed(2));
 
         // Помечаем код как использованный
         await client.query(
@@ -41,6 +85,8 @@ class ActivationController {
           [userId, activationCode.id]
         );
 
+        console.log('✅ Code marked as activated');
+
         // Зачисляем BRT на баланс пользователя
         await client.query(
           `UPDATE user_balances 
@@ -49,11 +95,13 @@ class ActivationController {
           [activationCode.amount_brt, userId]
         );
 
-        // Создаём транзакцию в системе
+        console.log('✅ Balance updated for user:', userId);
+
+        // Создаём транзакцию в системе (from_user_id = 17 treasury)
         await client.query(
           `INSERT INTO transactions 
            (from_user_id, to_user_id, crypto, amount, type, status, metadata)
-           VALUES (1, $1, 'BRT', $2, 'activation_code', 'completed', $3::jsonb)`,
+           VALUES (17, $1, 'BRT', $2, 'activation_code', 'completed', $3::jsonb)`,
           [
             userId, 
             activationCode.amount_brt,
@@ -65,11 +113,16 @@ class ActivationController {
           ]
         );
 
+        console.log('✅ Transaction recorded (from treasury to user)');
+
         return {
           brtAmount: parseFloat(activationCode.amount_brt),
-          usdAmount: parseFloat(activationCode.amount_usd)
+          usdAmount: parseFloat(activationCode.amount_usd),
+          treasuryBalance: parseFloat(treasuryResult.rows[0].balance)
         };
       });
+
+      console.log('✅ Activation complete:', result);
 
       res.json({ 
         success: true, 
@@ -77,7 +130,8 @@ class ActivationController {
         data: result
       });
     } catch (error) {
-      console.error('Redeem code error:', error);
+      console.error('❌ Redeem code error:', error.message);
+      console.error('❌ Full error:', error);
       res.status(400).json({ 
         success: false, 
         message: error.message || 'Failed to activate code' 
