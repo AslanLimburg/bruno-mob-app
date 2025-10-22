@@ -1,13 +1,24 @@
+import { WalletProvider } from './contexts/WalletContext';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { TronWalletProvider } from './contexts/TronWalletContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <App />
+  </React.StrictMode>
+);
+root.render(
+  <React.StrictMode>
+    <WalletProvider>
+      <TronWalletProvider>
+        <App />
+      </TronWalletProvider>
+    </WalletProvider>
   </React.StrictMode>
 );
 

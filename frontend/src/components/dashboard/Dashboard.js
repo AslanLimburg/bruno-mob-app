@@ -12,6 +12,7 @@ import Messenger from '../messenger/Messenger';
 import StarsChallenge from '../stars-challenge/StarsChallenge';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import CryptoBalances from '../CryptoBalances';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -338,6 +339,7 @@ const fetchTransactions = async () => {
         {/* Balance Card */}
         <div className="balance-card">
           <h2>Total Balance</h2>
+          <CryptoBalances />
           <div className="balance-amount">{localBalance.toLocaleString()} BRT</div>
           <div className="balance-subtitle">≈ ${(localBalance * 0.1).toLocaleString()} USD</div>
         </div>

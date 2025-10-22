@@ -60,10 +60,10 @@ app.use('/api/stars', starsRoutes);
 app.use('/api/messenger', messengerRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/vector', vectorDestinyRoutes);
-app.use('/api/wallet', walletRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/activation', activationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/user', walletRoutes);
 
 // Запустить Unified Scheduler
 startAllSchedulers();
