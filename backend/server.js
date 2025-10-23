@@ -9,6 +9,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
+// const userRoutes = require('./routes/userRoutes');
 const referralRoutes = require('./routes/referralRoutes');
 const lotteryRoutes = require('./routes/lotteryRoutes');
 const clubAvalancheRoutes = require('./routes/clubAvalancheRoutes');
@@ -22,6 +23,10 @@ const walletRoutes = require('./routes/walletRoutes');
 const stripeRoutes = require('./routes/stripeRoutes');
 const activationRoutes = require('./routes/activationRoutes');
 const uploadRoutes = require('./routes/upload');
+const treasuryRoutes = require('./routes/treasuryRoutes');
+const swapRoutes = require('./routes/swapRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+const { authMiddleware } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -51,6 +56,7 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/referral', referralRoutes);
 app.use('/api/lottery', lotteryRoutes);
@@ -63,8 +69,11 @@ app.use('/api/vector', vectorDestinyRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/activation', activationRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api/user', walletRoutes);
-
+// app.use('/api/user', authMiddleware, userRoutes);
+app.use('/api/wallet', authMiddleware, walletRoutes);
+app.use('/api/treasury', treasuryRoutes);
+app.use('/api/swap', swapRoutes);
+app.use('/api/transactions', authMiddleware, transactionRoutes);
 // Запустить Unified Scheduler
 startAllSchedulers();
 
