@@ -452,3 +452,120 @@
   color: #00ff00;
   font-family: 'Monaco', monospace;
 }
+/* ==================== TABS ==================== */
+.tabs-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  color: #1E293B;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.tab-button.active {
+  color: #3B82F6;
+  border-bottom-color: #3B82F6;
+}
+
+/* ==================== WALLET SECTIONS ==================== */
+.wallet-section {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.wallet-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wallet-content {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.qr-code-container {
+  flex-shrink: 0;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.wallet-address-box {
+  flex: 1;
+  min-width: 200px;
+}
+
+.receive-address.small {
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.wallet-hint {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.wallet-hint small {
+  color: #10B981;
+  font-weight: 500;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 600px) {
+  .wallet-content {
+    flex-direction: column;
+  }
+  
+  .qr-code-container {
+    margin: 0 auto;
+  }
+}
+/* ==================== SWAP ROUTE INFO ==================== */
+.swap-route-info {
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.swap-route-info small {
+  color: #0369A1;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.fee-info {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 5px;
+}
