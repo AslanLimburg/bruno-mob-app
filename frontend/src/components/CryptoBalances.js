@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useWallet } from '../contexts/WalletContext';
 import { useTronWallet } from '../contexts/TronWalletContext';
 import { TOKENS, ERC20_ABI, formatTokenAmount } from '../config/tokens.config';
+import './CryptoBalances.css';
 
 const CryptoBalances = () => {
   const { address, provider, chainId, connectWallet, disconnectWallet, isConnected } = useWallet();
@@ -12,7 +13,6 @@ const CryptoBalances = () => {
     connectTronWallet, 
     disconnectTronWallet, 
     isConnected: isTronConnected,
-    getTrxBalance,
     getTrc20Balance 
   } = useTronWallet();
 
@@ -21,7 +21,6 @@ const CryptoBalances = () => {
     USDC_ETH: '0',
     BRTC: '0',
     USDT_TRC20: '0',
-    TRX: '0',
   });
   const [loading, setLoading] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(null);
@@ -31,9 +30,6 @@ const CryptoBalances = () => {
 
     try {
       if (chainId !== tokenConfig.chainId) return '0';
-      if (tokenConfig.symbol === 'BRTC' && tokenConfig.address === '0x0000000000000000000000000000000000000000') {
-        return '0';
-      }
 
       const contract = new ethers.Contract(tokenConfig.address, ERC20_ABI, provider);
       const balance = await contract.balanceOf(address);
@@ -54,9 +50,8 @@ const CryptoBalances = () => {
         brtc = await fetchTokenBalance(TOKENS.BRTC);
       }
 
-      let usdtTrc20 = '0', trx = '0';
+      let usdtTrc20 = '0';
       if (isTronConnected && tronAddress) {
-        trx = await getTrxBalance(tronAddress);
         usdtTrc20 = await getTrc20Balance(tronAddress, TOKENS.USDT_TRC20.address);
       }
 
@@ -65,7 +60,6 @@ const CryptoBalances = () => {
         USDC_ETH: usdcEth,
         BRTC: brtc,
         USDT_TRC20: usdtTrc20,
-        TRX: trx,
       });
     } catch (error) {
       console.error('Error loading balances:', error);
@@ -184,7 +178,7 @@ const CryptoBalances = () => {
           <div className="crypto-balances-grid">
             <div className="crypto-card">
               <div className="crypto-icon">
-                <img src="/images/tokens/usdt.png" alt="USDT" onError={(e) => e.target.style.display = 'none'} />
+                <span className="crypto-symbol">💵</span>
               </div>
               <div className="crypto-info">
                 <h4>USDT</h4>
@@ -208,7 +202,7 @@ const CryptoBalances = () => {
 
             <div className="crypto-card">
               <div className="crypto-icon">
-                <img src="/images/tokens/usdc.png" alt="USDC" onError={(e) => e.target.style.display = 'none'} />
+                <span className="crypto-symbol">💵</span>
               </div>
               <div className="crypto-info">
                 <h4>USDC</h4>
@@ -232,7 +226,7 @@ const CryptoBalances = () => {
 
             <div className="crypto-card tron-card">
               <div className="crypto-icon">
-                <img src="/images/tokens/usdt.png" alt="USDT" onError={(e) => e.target.style.display = 'none'} />
+                <span className="crypto-symbol">💵</span>
               </div>
               <div className="crypto-info">
                 <h4>USDT</h4>
@@ -251,30 +245,10 @@ const CryptoBalances = () => {
               {!isTronConnected && <p className="network-warning">🔺 Connect TronLink</p>}
             </div>
 
-            <div className="crypto-card tron-card">
-              <div className="crypto-icon">
-                <img src="/images/tokens/trx.png" alt="TRX" onError={(e) => e.target.style.display = 'none'} />
-              </div>
-              <div className="crypto-info">
-                <h4>TRX</h4>
-                <p className="crypto-chain">Tron Network</p>
-              </div>
-              <div className="crypto-balance">
-                {loading ? (
-                  <div className="loading-spinner">⏳</div>
-                ) : (
-                  <>
-                    <span className="balance-amount">{balances.TRX}</span>
-                    <span className="balance-symbol">TRX</span>
-                  </>
-                )}
-              </div>
-              {!isTronConnected && <p className="network-warning">🔺 Connect TronLink</p>}
-            </div>
 
             <div className="crypto-card brtc-card">
               <div className="crypto-icon">
-                <img src="/images/tokens/brtc.png" alt="BRTC" onError={(e) => e.target.style.display = 'none'} />
+                <span className="crypto-symbol">🪙</span>
               </div>
               <div className="crypto-info">
                 <h4>BRTC</h4>
@@ -283,8 +257,6 @@ const CryptoBalances = () => {
               <div className="crypto-balance">
                 {loading ? (
                   <div className="loading-spinner">⏳</div>
-                ) : TOKENS.BRTC.address === '0x0000000000000000000000000000000000000000' ? (
-                  <p className="coming-soon">Coming Soon</p>
                 ) : (
                   <>
                     <span className="balance-amount">{balances.BRTC}</span>
@@ -292,7 +264,7 @@ const CryptoBalances = () => {
                   </>
                 )}
               </div>
-              {isConnected && chainId !== 56 && TOKENS.BRTC.address !== '0x0000000000000000000000000000000000000000' && (
+              {isConnected && chainId !== 56 && (
                 <p className="network-warning">⚠️ Switch to BSC</p>
               )}
             </div>

@@ -1,0 +1,98 @@
+// Token configurations for multi-chain support
+
+export const CHAINS = {
+  BSC: {
+    chainId: 56,
+    name: 'Binance Smart Chain',
+    rpcUrl: 'https://bsc-dataseed.binance.org/',
+    blockExplorer: 'https://bscscan.com',
+    nativeCurrency: {
+      name: 'BNB',
+      symbol: 'BNB',
+      decimals: 18,
+    },
+  },
+  ETHEREUM: {
+    chainId: 1,
+    name: 'Ethereum Mainnet',
+    rpcUrl: 'https://eth.llamarpc.com',
+    blockExplorer: 'https://etherscan.io',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+  },
+};
+
+// Token configurations
+export const TOKENS = {
+  // USDT on Binance Smart Chain (BEP-20)
+  USDT_BSC: {
+    symbol: 'USDT',
+    name: 'Tether USD (BEP-20)',
+    address: '0x55d398326f99059fF775485246999027B3197955', // Real USDT BEP-20 address
+    decimals: 18,
+    chainId: 56,
+    chain: 'BSC',
+    logo: '/images/tokens/usdt.png',
+  },
+
+  // USDC on Ethereum (ERC-20)
+  USDC_ETH: {
+    symbol: 'USDC',
+    name: 'USD Coin (ERC-20)',
+    address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // Real USDC ERC-20 address
+    decimals: 6,
+    chainId: 1,
+    chain: 'ETHEREUM',
+    logo: '/images/tokens/usdc.png',
+  },
+
+  // BRTC on Binance Smart Chain (BEP-20) - PLACEHOLDER
+  BRTC: {
+    symbol: 'BRTC',
+    name: 'Bruno Token Coin (BEP-20)',
+    address: '0x0000000000000000000000000000000000000000', // TEMPORARY - replace after deployment
+    decimals: 18,
+    chainId: 56,
+    chain: 'BSC',
+    logo: '/images/tokens/brtc.png',
+  },
+};
+
+// ERC-20 ABI (minimal for balance checking and transfers)
+export const ERC20_ABI = [
+  // Read functions
+  'function balanceOf(address owner) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+  'function name() view returns (string)',
+  'function totalSupply() view returns (uint256)',
+  
+  // Write functions
+  'function transfer(address to, uint256 amount) returns (bool)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  
+  // Events
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+  'event Approval(address indexed owner, address indexed spender, uint256 value)',
+];
+
+// Helper function to get token by symbol
+export const getTokenBySymbol = (symbol) => {
+  return Object.values(TOKENS).find(token => token.symbol === symbol);
+};
+
+// Helper function to format token amount
+export const formatTokenAmount = (amount, decimals) => {
+  if (!amount) return '0';
+  const value = parseFloat(amount) / Math.pow(10, decimals);
+  return value.toFixed(4);
+};
+
+// Helper function to parse token amount for transaction
+export const parseTokenAmount = (amount, decimals) => {
+  return (parseFloat(amount) * Math.pow(10, decimals)).toString();
+};

@@ -100,7 +100,7 @@ const SignUp = ({ addNotification }) => {
               onChange={(e) => setAgreedToTerms(e.target.checked)} 
               required 
             />
-            I agree to Terms of Service
+            I agree to Terms of Service 18+
           </label>
           <button type="submit" disabled={loading || !agreedToTerms}>
             {loading ? 'Creating...' : 'Create Account'}

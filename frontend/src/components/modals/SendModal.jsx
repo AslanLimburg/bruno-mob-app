@@ -16,7 +16,6 @@ const SendModal = ({ onClose, addNotification }) => {
   const tokens = [
     { symbol: 'USDT', networks: ['BSC', 'Tron'] },
     { symbol: 'USDC', networks: ['Ethereum'] },
-    { symbol: 'TRX', networks: ['Tron'] },
     { symbol: 'BRTC', networks: ['BSC'] }
   ];
 

@@ -17,11 +17,6 @@ import BRTCDexWidget from './BRTCDexWidget';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-const mockCoupons = [
-  {id:1,code:"WELCOME100",discount:"100 BRT",type:"bonus",expires:"2025-12-31",used:false},
-  {id:2,code:"SAVE20",discount:"20%",type:"discount",expires:"2025-11-30",used:false},
-  {id:3,code:"VIP500",discount:"500 BRT",type:"bonus",expires:"2025-10-15",used:true},
-];
 
 const mockReferrals = [
   {id:1,name:"Alice Johnson",email:"alice@example.com",joined:"2025-09-15",earnings:"250 BRT",status:"active"},
@@ -210,8 +205,8 @@ const fetchTransactions = async () => {
     return () => clearInterval(interval);
   }, [refreshUser]);
   
-  // ✅ ОБНОВЛЕННАЯ функция активации кода
- const handleRedeemCoupon = async () => {
+  // ✅ Функция активации кода
+  const handleRedeemCoupon = async () => {
     if (!couponCode) {
       addNotification("error", "Please enter an activation code");
       return;
@@ -308,12 +303,6 @@ const fetchTransactions = async () => {
           </div>
         </div>
         
-        {/* User Info */}
-        <div className="user-info">
-          <div className="user-name">{user?.name || 'User'}</div>
-          <div className="user-email">{user?.email || 'user@example.com'}</div>
-          <div className="user-id">ID: {user?.id || '000000'}</div>
-        </div>
         
         <div className="header-actions">
           {/* 🆕 KYC BADGE */}
@@ -472,6 +461,7 @@ const fetchTransactions = async () => {
                 <h4>Basic Package</h4>
                 <div className="shop-amount">5.5 BRT</div>
                 <div className="shop-price">$7</div>
+                <div className="shop-save">+1 BRTC Bonus!</div>
                 <button onClick={()=>handleBuyTokens('basic', 7, 5.5)} className="btn-buy">Buy Now</button>
               </div>
               
@@ -480,7 +470,7 @@ const fetchTransactions = async () => {
                 <h4>Silver Package</h4>
                 <div className="shop-amount">51 BRT</div>
                 <div className="shop-price">$61</div>
-                <div className="shop-save">+1 BRT Bonus!</div>
+                <div className="shop-save">+7 BRTC Bonus!</div>
                 <button onClick={()=>handleBuyTokens('silver', 61, 51)} className="btn-buy">Buy Now</button>
               </div>
               
@@ -490,7 +480,7 @@ const fetchTransactions = async () => {
                 <h4>Gold Package</h4>
                 <div className="shop-amount">501 BRT</div>
                 <div className="shop-price">$600</div>
-                <div className="shop-save">+1 BRT Bonus!</div>
+                <div className="shop-save">+100 BRTC Bonus!</div>
                 <button onClick={()=>handleBuyTokens('gold', 600, 501)} className="btn-buy">Buy Now</button>
               </div>
               
@@ -499,68 +489,14 @@ const fetchTransactions = async () => {
                 <h4>Platinum Package</h4>
                 <div className="shop-amount">1,001 BRT</div>
                 <div className="shop-price">$1,200</div>
-                <div className="shop-save">+1 BRT Bonus!</div>
+                <div className="shop-save">+700 BRTC Bonus!</div>
                 <button onClick={()=>handleBuyTokens('platinum', 1200, 1001)} className="btn-buy">Buy Now</button>
-              </div>
-            </div>
-            
-            <h3 style={{marginTop: 40}}>🎖️ Membership Tiers</h3>
-            <div className="membership-grid">
-              <div className="membership-card bronze">
-                <div className="membership-tier">Bronze</div>
-                <div className="membership-price">$29/month</div>
-                <ul className="membership-features">
-                  <li>✓ 5% Cashback on trades</li>
-                  <li>✓ Priority support</li>
-                  <li>✓ Exclusive airdrops</li>
-                </ul>
-                <button onClick={()=>handleBuyMembership("Bronze", 29)} className="btn-membership">Subscribe</button>
-              </div>
-              
-              <div className="membership-card silver">
-                <div className="membership-tier">Silver</div>
-                <div className="membership-price">$59/month</div>
-                <ul className="membership-features">
-                  <li>✓ 10% Cashback on trades</li>
-                  <li>✓ VIP support 24/7</li>
-                  <li>✓ Double airdrops</li>
-                  <li>✓ Access to exclusive events</li>
-                </ul>
-                <button onClick={()=>handleBuyMembership("Silver", 59)} className="btn-membership">Subscribe</button>
-              </div>
-              
-              <div className="membership-card gold featured">
-                <span className="membership-badge">POPULAR</span>
-                <div className="membership-tier">Gold</div>
-                <div className="membership-price">$99/month</div>
-                <ul className="membership-features">
-                  <li>✓ 15% Cashback on trades</li>
-                  <li>✓ Dedicated account manager</li>
-                  <li>✓ Triple airdrops</li>
-                  <li>✓ Early access to features</li>
-                  <li>✓ Monthly bonus tokens</li>
-                </ul>
-                <button onClick={()=>handleBuyMembership("Gold", 99)} className="btn-membership gold-btn">Subscribe</button>
-              </div>
-              
-              <div className="membership-card platinum">
-                <div className="membership-tier">Platinum</div>
-                <div className="membership-price">$199/month</div>
-                <ul className="membership-features">
-                  <li>✓ 20% Cashback on trades</li>
-                  <li>✓ Personal VIP concierge</li>
-                  <li>✓ 5x airdrops</li>
-                  <li>✓ Private events access</li>
-                  <li>✓ Unlimited withdrawals</li>
-                  <li>✓ Custom trading strategies</li>
-                </ul>
-                <button onClick={()=>handleBuyMembership("Platinum", 199)} className="btn-membership platinum-btn">Subscribe</button>
               </div>
             </div>
           </div>
         )}
         
-        {/* Coupons Tab - ОБНОВЛЕНО */}
+        {/* Coupons Tab - Только активация кода */}
         {activeTab==="coupons" && (
           <div className="coupons-section">
             <h3>🎫 Redeem Activation Code</h3>
@@ -580,30 +516,6 @@ const fetchTransactions = async () => {
               </div>
               <p className="coupon-info">Enter your activation code to receive BRT tokens instantly</p>
             </div>
-            
-            <h4>Your Activation Codes</h4>
-            {mockCoupons.length === 0 ? (
-              <div className="empty-state">
-                <div style={{fontSize: '48px', marginBottom: '20px'}}>🎫</div>
-                <div>No activation codes yet</div>
-                <div className="empty-subtitle">Purchase BRT tokens to receive activation codes via email</div>
-              </div>
-            ) : (
-              <div className="coupons-list">
-                {mockCoupons.map(coupon => (
-                  <div key={coupon.id} className={`coupon-card ${coupon.used?"used":""}`}>
-                    <span className={`coupon-badge ${coupon.used?"used-badge":"bonus"}`}>
-                      {coupon.used?"USED":"ACTIVE"}
-                    </span>
-                    <div className="coupon-code-text">{coupon.code}</div>
-                    <div className="coupon-details">
-                      <span className="coupon-value">{coupon.discount}</span>
-                      <span className="coupon-expires">Expires: {coupon.expires}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
         

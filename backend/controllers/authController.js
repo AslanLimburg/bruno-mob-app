@@ -119,18 +119,27 @@ class AuthController {
   static async login(req, res) {
     try {
       const { email, password } = req.body;
+      console.log('🔍 Login attempt for:', email);
 
       const user = await User.findByEmail(email);
       if (!user) {
+        console.log('❌ User not found:', email);
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 
+      console.log('✅ User found:', user.email, 'Status:', user.account_status);
+
       if (user.account_status !== 'active') {
+        console.log('❌ Account not active:', user.account_status);
         return res.status(403).json({ success: false, message: `Account ${user.account_status}` });
       }
 
+      console.log('🔍 Verifying password...');
       const isValid = await User.verifyPassword(password, user.password_hash);
+      console.log('🔍 Password valid:', isValid);
+      
       if (!isValid) {
+        console.log('❌ Invalid password for:', email);
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
 

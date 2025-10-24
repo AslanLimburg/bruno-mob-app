@@ -11,7 +11,7 @@ const SendModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
 
   // Определяем режим: off-chain (BRT) или on-chain (crypto)
   const isOffChain = crypto === "BRT";
-  const onChainTokens = ["USDT-BEP20", "USDC-ERC20", "USDT-TRC20", "TRX", "BRTC"];
+  const onChainTokens = ["USDT-BEP20", "USDC-ERC20", "USDT-TRC20", "BRTC"];
 
   if (!isOpen) return null;
 
@@ -89,7 +89,7 @@ const SendModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
       }
 
       // Валидация адреса
-      const isTron = crypto.includes("TRC20") || crypto === "TRX";
+      const isTron = crypto.includes("TRC20");
       if (isTron && !recipientAddress.startsWith("T")) {
         addNotification("error", "Invalid Tron address (must start with T)");
         return;
@@ -267,7 +267,7 @@ const SendModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
               <label>Recipient Wallet Address</label>
               <input
                 type="text"
-                placeholder={crypto.includes("TRC20") || crypto === "TRX" ? "T..." : "0x..."}
+                placeholder={crypto.includes("TRC20") ? "T..." : "0x..."}
                 value={recipientAddress}
                 onChange={(e) => setRecipientAddress(e.target.value)}
                 required

@@ -3,7 +3,7 @@ import axios from "axios";
 import "./Modal.css";
 
 const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionComplete }) => {
-  const cryptos = ["BRT", "USDT-BEP20", "USDC-ERC20", "USDT-TRC20", "TRX", "BRTC"];
+  const cryptos = ["BRT", "USDT-BEP20", "USDC-ERC20", "USDT-TRC20", "BRTC"];
   const [fromCrypto, setFromCrypto] = useState("USDT-BEP20");
   const [toCrypto, setToCrypto] = useState("BRT");
   const [amount, setAmount] = useState("");
@@ -20,7 +20,6 @@ const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
       'USDT-BEP20': dbBalances.USDT || 0,      // USDT из БД → USDT-BEP20
       'USDC-ERC20': dbBalances.USDC || 0,      // USDC из БД → USDC-ERC20
       'USDT-TRC20': dbBalances.USDT || 0,      // Тот же USDT для TRC20
-      'TRX': dbBalances.TRX || 0,
       'ETH': dbBalances.ETH || 0,
       'BTC': dbBalances.BTC || 0
     };
@@ -66,7 +65,6 @@ const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
         "USDT-BEP20": 1,
         "USDC-ERC20": 1,
         "USDT-TRC20": 1,
-        "TRX": 0.15,
         "BRTC": 0.01
       });
     }
@@ -150,7 +148,7 @@ const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
 
   // CRYPTO → BRT (юзер покупает BRT)
   const swapCryptoToBRT = async () => {
-    const isTron = fromCrypto.includes("TRC20") || fromCrypto === "TRX";
+    const isTron = fromCrypto.includes("TRC20");
     
     try {
       // Шаг 1: Отправить crypto на Treasury
@@ -232,7 +230,7 @@ const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
     try {
       // Получаем адрес получателя от пользователя
       const recipientAddress = prompt(
-        `Enter your ${toCrypto.includes("TRC20") || toCrypto === "TRX" ? "TronLink" : "MetaMask"} address:`
+        `Enter your ${toCrypto.includes("TRC20") ? "TronLink" : "MetaMask"} address:`
       );
 
       if (!recipientAddress) {
@@ -240,7 +238,7 @@ const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
       }
 
       // Валидация адреса
-      const isTron = toCrypto.includes("TRC20") || toCrypto === "TRX";
+      const isTron = toCrypto.includes("TRC20");
       if (isTron && !recipientAddress.startsWith("T")) {
         throw new Error("Invalid Tron address");
       }

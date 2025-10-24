@@ -16,7 +16,6 @@ const SwapModal = ({ onClose, addNotification }) => {
   const tokens = [
     { symbol: 'USDT', balance: 0 },
     { symbol: 'USDC', balance: 0 },
-    { symbol: 'TRX', balance: 0 },
     { symbol: 'BRTC', balance: 0 },
     { symbol: 'BNB', balance: 0 }
   ];

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext.js';
 import './Messenger.css';
 
 const Messenger = () => {
@@ -11,8 +11,11 @@ const Messenger = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
-  const pollIntervalRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const API_URL = process.env.REACT_APP_API_URL;
   const token = localStorage.getItem('token');
@@ -41,7 +44,6 @@ const Messenger = () => {
       const data = await response.json();
       if (data.success) {
         setMessages(data.data.reverse());
-        // Отмечаем как прочитанное
         await fetch(`${API_URL}/messenger/read/${userId}`, {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${token}` }
@@ -55,12 +57,13 @@ const Messenger = () => {
 
   // Поиск пользователей
   const searchUsers = async (query) => {
-    if (query.length < 2) {
+    if (!query.trim()) {
       setSearchResults([]);
       return;
     }
+    
     try {
-      const response = await fetch(`${API_URL}/messenger/search?query=${encodeURIComponent(query)}`, {
+      const response = await fetch(`${API_URL}/messenger/search?q=${query}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -75,7 +78,7 @@ const Messenger = () => {
   // Отправка сообщения
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedContact) return;
+    if ((!newMessage.trim() && !selectedFile) || !selectedContact) return;
 
     try {
       const response = await fetch(`${API_URL}/messenger/send`, {
@@ -131,6 +134,68 @@ const Messenger = () => {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Функции для работы с файлами
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const uploadFile = async () => {
+    if (!selectedFile || !selectedContact) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('to_user_id', selectedContact.contact_user_id || selectedContact.id);
+
+    try {
+      const response = await fetch(`${API_URL}/messenger/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSelectedFile(null);
+        setNewMessage('');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        loadConversation(selectedContact.contact_user_id || selectedContact.id);
+      } else {
+        alert('Failed to upload file: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload file');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Добавление эмодзи
+  const addEmoji = (emoji) => {
+    setNewMessage(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  // Популярные эмодзи
+  const popularEmojis = ['😀', '😂', '😍', '🤔', '👍', '👎', '❤️', '🔥', '💯', '🎉', '😢', '😡', '🤯', '👏', '🙌'];
+
   // Автообновление таймеров каждую секунду
   useEffect(() => {
     const timerInterval = setInterval(() => {
@@ -142,17 +207,15 @@ const Messenger = () => {
 
   useEffect(() => {
     loadContacts();
+    console.log('🚀 BrunoChat updated with WhatsApp-style interface!');
+    console.log('📎 File upload enabled');
+    console.log('😀 Emoji picker enabled');
+    console.log('⏰ Auto-delete: 20 minutes');
   }, []);
 
- // Замени на (прокрутка только при НОВОМ сообщении):
-const prevMessagesLength = useRef(0);
-
-useEffect(() => {
-  if (messages.length > prevMessagesLength.current) {
+  useEffect(() => {
     scrollToBottom();
-  }
-  prevMessagesLength.current = messages.length;
-}, [messages]);
+  }, [messages]);
 
   useEffect(() => {
     if (searchQuery) {
@@ -163,7 +226,6 @@ useEffect(() => {
 
   return (
     <div className="messenger-container">
-      {/* Sidebar - Список контактов */}
       <div className="messenger-sidebar">
         <div className="messenger-header">
           <h3>💬 BrunoChat</h3>
@@ -175,7 +237,6 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* Поиск новых контактов */}
         {showSearch && (
           <div className="search-section">
             <input
@@ -190,7 +251,7 @@ useEffect(() => {
                 {searchResults.map(user => (
                   <div
                     key={user.id}
-                    className="search-result-item"
+                    className="contact-item"
                     onClick={() => selectContact(user)}
                   >
                     <div className="contact-avatar">{user.name[0]}</div>
@@ -205,7 +266,6 @@ useEffect(() => {
           </div>
         )}
 
-        {/* Список контактов */}
         <div className="contacts-list">
           {contacts.length === 0 ? (
             <div className="no-contacts">
@@ -235,7 +295,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Основная область - Чат */}
       <div className="messenger-main">
         {selectedContact ? (
           <>
@@ -248,7 +307,7 @@ useEffect(() => {
                 </div>
               </div>
               <div className="auto-delete-info">
-                🔥 Messages auto-delete in 3 min
+                🔥 Messages auto-delete in 20 min
               </div>
             </div>
 
@@ -280,27 +339,116 @@ useEffect(() => {
               )}
               <div ref={messagesEndRef} />
             </div>
-
-            <form className="message-input-form" onSubmit={sendMessage}>
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="message-input"
-              />
-              <button type="submit" className="send-btn">
-                📤
-              </button>
-            </form>
           </>
         ) : (
           <div className="no-chat-selected">
             <h2>💬 BrunoChat</h2>
             <p>Select a contact to start chatting</p>
-            <p className="security-notice">🔒 All messages auto-delete after 3 minutes</p>
+            <div className="features-list">
+              <div className="feature-item">📎 File upload enabled</div>
+              <div className="feature-item">😀 Emoji picker available</div>
+              <div className="feature-item">⌨️ Typing indicator active</div>
+            </div>
+            <p className="security-notice">🔒 All messages auto-delete after 20 minutes</p>
           </div>
         )}
+
+        {/* Форма ввода сообщений - всегда видимая как в WhatsApp */}
+        <div className="message-input-container">
+          {selectedFile && (
+            <div className="file-preview">
+              <div className="file-preview-content">
+                <span className="file-icon">📎</span>
+                <span className="file-name">{selectedFile.name}</span>
+                <span className="file-size">({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                <button 
+                  type="button" 
+                  className="remove-file-btn"
+                  onClick={removeSelectedFile}
+                >
+                  ✕
+                </button>
+              </div>
+              <button 
+                type="button" 
+                className="upload-file-btn"
+                onClick={uploadFile}
+                disabled={uploading}
+              >
+                {uploading ? '⏳ Uploading...' : '📤 Send File'}
+              </button>
+            </div>
+          )}
+
+          <form className="message-input-form" onSubmit={sendMessage}>
+            <div className="input-group">
+              <button 
+                type="button" 
+                className="emoji-btn" 
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                title="Add emoji"
+                disabled={!selectedContact}
+              >
+                😀
+              </button>
+              <input
+                type="text"
+                placeholder={selectedContact ? "Type a message..." : "Select a contact to start chatting"}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="message-input"
+                disabled={!selectedContact}
+              />
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="file-input"
+                id="file-input"
+                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                disabled={!selectedContact}
+              />
+              <label htmlFor="file-input" className={`file-btn ${!selectedContact ? 'disabled' : ''}`} title="Attach file">
+                📎
+              </label>
+              <button 
+                type="submit" 
+                className="send-btn" 
+                title="Send message"
+                disabled={!selectedContact || (!newMessage.trim() && !selectedFile)}
+              >
+                📤
+              </button>
+            </div>
+          </form>
+
+          {showEmojiPicker && (
+            <div className="emoji-picker">
+              <div className="emoji-picker-header">
+                <span>Choose an emoji</span>
+                <button 
+                  type="button" 
+                  className="close-emoji-btn"
+                  onClick={() => setShowEmojiPicker(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="emoji-grid">
+                {popularEmojis.map((emoji, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className="emoji-option"
+                    onClick={() => addEmoji(emoji)}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -106,19 +106,6 @@ export const TronWalletProvider = ({ children }) => {
     }
   };
 
-  // Get TRX balance
-  const getTrxBalance = async (address) => {
-    if (!tronWeb || !address) return '0';
-
-    try {
-      const balance = await tronWeb.trx.getBalance(address);
-      // Convert from SUN to TRX (1 TRX = 1,000,000 SUN)
-      return (balance / 1000000).toFixed(4);
-    } catch (error) {
-      console.error('Error getting TRX balance:', error);
-      return '0';
-    }
-  };
 
   // Get TRC-20 token balance
   const getTrc20Balance = async (address, contractAddress) => {
@@ -190,7 +177,6 @@ export const TronWalletProvider = ({ children }) => {
     isTronLinkInstalled: isTronLinkInstalled(),
     connectTronWallet,
     disconnectTronWallet,
-    getTrxBalance,
     getTrc20Balance,
   };
 

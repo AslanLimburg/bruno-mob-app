@@ -22,7 +22,6 @@ const SendCryptoModal = ({ isOpen, onClose, addNotification }) => {
     { key: 'USDT_BSC', label: 'USDT (BEP-20)', chain: 'BSC' },
     { key: 'USDC_ETH', label: 'USDC (ERC-20)', chain: 'ETHEREUM' },
     { key: 'USDT_TRC20', label: 'USDT (TRC-20)', chain: 'TRON' },
-    { key: 'TRX', label: 'TRX', chain: 'TRON' },
     { key: 'BRTC', label: 'BRTC (BEP-20)', chain: 'BSC' },
   ];
 
@@ -90,10 +89,7 @@ const SendCryptoModal = ({ isOpen, onClose, addNotification }) => {
   const loadTronBalance = async () => {
     if (!tronAddress || !tronWeb) return;
     try {
-      if (tokenConfig.symbol === 'TRX') {
-        const balance = await tronWeb.trx.getBalance(tronAddress);
-        setBalance((balance / 1_000_000).toFixed(4));
-      } else {
+      if (tokenConfig.symbol === 'USDT') {
         const contract = await tronWeb.contract().at(tokenConfig.address);
         const balance = await contract.balanceOf(tronAddress).call();
         const decimals = await contract.decimals().call();
@@ -223,11 +219,7 @@ const SendCryptoModal = ({ isOpen, onClose, addNotification }) => {
   };
 
   const sendTronTransaction = async () => {
-    if (tokenConfig.symbol === 'TRX') {
-      const amountSun = tronWeb.toSun(amount);
-      const tx = await tronWeb.trx.sendTransaction(recipientAddress, amountSun);
-      return tx.txid;
-    } else {
+    if (tokenConfig.symbol === 'USDT') {
       const contract = await tronWeb.contract().at(tokenConfig.address);
       const decimals = await contract.decimals().call();
       const amountWithDecimals = parseFloat(amount) * Math.pow(10, decimals);

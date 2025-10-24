@@ -127,7 +127,7 @@ const ReceiveModal = ({ isOpen, onClose, user }) => {
                   </div>
                 </div>
                 <div className="wallet-hint">
-                  <small>✅ For: USDT (TRC-20), TRX</small>
+                  <small>✅ For: USDT (TRC-20)</small>
                 </div>
               </div>
 

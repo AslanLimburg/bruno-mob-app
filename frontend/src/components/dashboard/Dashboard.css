@@ -13,6 +13,8 @@
   background: #1d2e4a;
   border-radius: 12px;
   margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .dashboard-logo {
@@ -116,39 +118,6 @@
   font-size: 18px;
 }
 
-/* USER INFO STYLES - ЕДИНСТВЕННЫЙ БЛОК */
-.user-info {
-  text-align: right;
-  padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid #00ffff;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-}
-
-.user-name {
-  font-size: 18px;
-  font-weight: bold;
-  color: #ffff00 !important;
-  text-shadow: 0 0 10px #ffff00;
-}
-
-.user-email {
-  font-size: 16px;
-  color: #ffff00 !important;  /* Изменили с #ffffff на #ffff00 */
-  font-weight: bold;
-  letter-spacing: 1px;
-  margin: 5px 0;
-  text-shadow: 0 0 10px #fb0505;  /* Добавили свечение как у ID */
-}
-
-.user-id {
-  font-size: 12px;
-  color: #ffff00 !important;
-  font-family: 'Monaco', monospace;
-  font-weight: bold;
-  text-shadow: 0 0 10px #ffff00;
-}
 
 .balances-grid {
   display: grid;

@@ -56,18 +56,26 @@
 
 .club-programs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 25px;
   margin-bottom: 40px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .club-program-card {
   background: linear-gradient(135deg, #1d2e4a 0%, #2a3f5f 100%);
   border-radius: 15px;
-  padding: 25px;
+  padding: 35px;
   cursor: pointer;
   transition: all 0.3s;
   border: 2px solid transparent;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .club-program-card:hover {
@@ -89,8 +97,9 @@
 
 .program-header h3 {
   color: #FFF;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   margin: 0;
+  font-weight: 600;
 }
 
 .owned-badge {
@@ -103,10 +112,10 @@
 }
 
 .program-price {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
   color: #FFA726;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .program-details {
@@ -116,8 +125,9 @@
 .detail-row {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 10px 0;
   color: #94A3B8;
+  font-size: 1.1rem;
 }
 
 .detail-row span:last-child {
@@ -127,7 +137,8 @@
 
 .program-btn {
   width: 100%;
-  padding: 12px;
+  padding: 15px;
+  font-size: 1.1rem;
   background: #FFA726;
   color: white;
   border: none;
@@ -351,6 +362,20 @@
 @media (max-width: 768px) {
   .club-stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  
+  .club-programs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .club-programs-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
     gap: 15px;
   }
 }
