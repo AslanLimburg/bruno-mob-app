@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-const bcrypt = require('bcryptjs');  // ← Используем bcryptjs как в модели!
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const pool = new Pool({
@@ -10,14 +10,14 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD
 });
 
-async function fixPasswords() {
+async function resetPasswords() {
   try {
     const password = 'Admin123!';
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    console.log('🔐 Хэш через bcryptjs:', hashedPassword);
+    console.log('🔐 Хэш пароля:', hashedPassword);
     console.log('🔑 Пароль:', password);
-    console.log('\n📝 Обновляем пароли через bcryptjs...\n');
+    console.log('\n📝 Обновляем пароли...\n');
     
     const users = [
       'super-admin@brunotoken.com',
@@ -34,8 +34,8 @@ async function fixPasswords() {
       console.log(`✅ ${email} - пароль обновлён`);
     }
     
-    console.log('\n✅ Все пароли обновлены через bcryptjs!');
-    console.log('🔐 Пароль для всех: Admin123!\n');
+    console.log('\n✅ Все пароли обновлены!');
+    console.log('🔐 Новый пароль для всех: Admin123!\n');
     
     await pool.end();
     process.exit(0);
@@ -45,4 +45,4 @@ async function fixPasswords() {
   }
 }
 
-fixPasswords();
+resetPasswords();

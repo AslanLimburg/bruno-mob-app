@@ -6,24 +6,38 @@ async function createServiceAccounts() {
   try {
     const password = await bcrypt.hash('service-account-secure-password', 10);
     
-    // 1. Главный резервный фонд
+    // 1. Главный резервный фонд / Admin
     await query(`
       INSERT INTO users (id, email, password_hash, name, account_status)
-      VALUES (1, 'admin@brunotoken.com', $1, 'Reserve Fund', 'active')
+      VALUES (1, 'admin@brunotoken.com', $1, 'Admin Account', 'active')
       ON CONFLICT (id) DO NOTHING
     `, [password]);
     
-    // 2. Gas Fee фонд
+    // 11. Gas Fee - основной аккаунт для сбора комиссий
     await query(`
       INSERT INTO users (id, email, password_hash, name, account_status)
-      VALUES (2, 'gasfee@brunotoken.com', $1, 'Gas Fee Fund', 'active')
+      VALUES (11, 'gasfee@brunotoken.com', $1, 'Gas Fee Fund', 'active')
+      ON CONFLICT (id) DO NOTHING
+    `, [password]);
+    
+    // 17. Treasury - казначейство для выплат бонусов
+    await query(`
+      INSERT INTO users (id, email, password_hash, name, account_status)
+      VALUES (17, 'treasury@brunotoken.com', $1, 'Treasury Fund', 'active')
+      ON CONFLICT (id) DO NOTHING
+    `, [password]);
+    
+    // 18. Super Admin
+    await query(`
+      INSERT INTO users (id, email, password_hash, name, account_status)
+      VALUES (18, 'super-admin@brunotoken.com', $1, 'Super Admin', 'active')
       ON CONFLICT (id) DO NOTHING
     `, [password]);
     
     console.log('✅ Service accounts created');
     
-    // Создать балансы BRT
-    const accounts = [1, 2];
+    // Создать балансы BRT для всех системных аккаунтов
+    const accounts = [1, 11, 17, 18];
     for (const userId of accounts) {
       await query(`
         INSERT INTO user_balances (user_id, crypto, balance)
@@ -33,6 +47,12 @@ async function createServiceAccounts() {
     }
     
     console.log('✅ Service account balances created');
+    console.log('📊 Created accounts:');
+    console.log('   - ID 1: admin@brunotoken.com');
+    console.log('   - ID 11: gasfee@brunotoken.com');
+    console.log('   - ID 17: treasury@brunotoken.com');
+    console.log('   - ID 18: super-admin@brunotoken.com');
+    
     process.exit(0);
   } catch (error) {
     console.error('❌ Error:', error);

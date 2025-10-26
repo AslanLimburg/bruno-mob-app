@@ -1,159 +1,123 @@
 import React, { useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
 import "./Modal.css";
 
 const ReceiveModal = ({ isOpen, onClose, user }) => {
-  const [activeTab, setActiveTab] = useState("offchain"); // "offchain" или "onchain"
+  // ✅ ТОЛЬКО 4 криптовалюты (БЕЗ TronLink и USDT-TRC20)
+  const [crypto, setCrypto] = useState("BRT");
 
   if (!isOpen) return null;
 
-  // Адреса кошельков (пока mock, потом подключим из user)
-  const metamaskAddress = user?.metamaskAddress || "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
-  const tronlinkAddress = user?.tronlinkAddress || "TXYZopYRdj2D9XRtbG4uXGobSJpT2fU4Gh";
-
-  const handleCopyEmail = () => {
-    navigator.clipboard.writeText(user?.email || '');
-    alert('Email copied to clipboard!');
+  // Адреса для разных сетей
+  const walletAddresses = {
+    "BRT": user?.email || "your-email@example.com", // BRT получаем по email
+    "USDT-BEP20": user?.walletAddresses?.["USDT-BEP20"] || "Connect MetaMask",
+    "USDC-ERC20": user?.walletAddresses?.["USDC-ERC20"] || "Connect MetaMask",
+    "BRTC": user?.walletAddresses?.BRTC || "Connect MetaMask"
   };
 
-  const handleCopyAddress = (address, type) => {
-    navigator.clipboard.writeText(address);
-    alert(`${type} address copied to clipboard!`);
+  const currentAddress = walletAddresses[crypto];
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(currentAddress);
+    alert(`${crypto} address copied!`);
+  };
+
+  const connectMetaMask = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        alert(`MetaMask connected: ${accounts[0]}`);
+        // Здесь можно сохранить адрес на backend
+      } catch (error) {
+        console.error("MetaMask connection error:", error);
+        alert("Failed to connect MetaMask");
+      }
+    } else {
+      alert("Please install MetaMask extension");
+      window.open("https://metamask.io/download/", "_blank");
+    }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Receive Crypto</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
+        <h2>Receive Crypto</h2>
+
+        {/* ✅ Выбор криптовалюты (БЕЗ TronLink) */}
+        <div className="form-group">
+          <label>Select Cryptocurrency:</label>
+          <select value={crypto} onChange={(e) => setCrypto(e.target.value)}>
+            <option value="BRT">BRT (Bruno System)</option>
+            <option value="USDT-BEP20">USDT (BEP-20)</option>
+            <option value="USDC-ERC20">USDC (ERC-20)</option>
+            <option value="BRTC">BRTC (BEP-20)</option>
+          </select>
         </div>
 
-        {/* Табы */}
-        <div className="tabs-container">
-          <button 
-            className={`tab-button ${activeTab === "offchain" ? "active" : ""}`}
-            onClick={() => setActiveTab("offchain")}
-          >
-            Off-Chain (Email)
-          </button>
-          <button 
-            className={`tab-button ${activeTab === "onchain" ? "active" : ""}`}
-            onClick={() => setActiveTab("onchain")}
-          >
-            On-Chain (Crypto)
-          </button>
-        </div>
-
-        <div className="receive-content">
-          
-          {/* OFF-CHAIN: Email для получения BRT */}
-          {activeTab === "offchain" && (
-            <>
-              <div className="receive-info">
-                <p><strong>To receive BRT, share your email address:</strong></p>
-              </div>
-
-              <div className="receive-address-box">
-                <div className="receive-label">Your Email Address</div>
-                <div className="receive-address">{user?.email || 'Loading...'}</div>
-                <button className="btn-copy" onClick={handleCopyEmail}>
-                  📋 Copy Email
-                </button>
-              </div>
-
-              <div className="receive-warning">
-                ⚠️ Share this email with the sender. They will use it to send you BRT within Bruno Token system.
-              </div>
-            </>
-          )}
-
-          {/* ON-CHAIN: Wallet адреса с QR кодами */}
-          {activeTab === "onchain" && (
-            <>
-              <div className="receive-info">
-                <p><strong>Scan QR code or copy address to receive crypto:</strong></p>
-              </div>
-
-              {/* MetaMask (EVM) */}
-              <div className="wallet-section">
-                <h3 className="wallet-title">🦊 MetaMask (Ethereum/BSC)</h3>
-                <div className="wallet-content">
-                  <div className="qr-code-container">
-                    <QRCodeSVG 
-                      value={metamaskAddress} 
-                      size={150}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </div>
-                  <div className="wallet-address-box">
-                    <div className="receive-label">Your MetaMask Address</div>
-                    <div className="receive-address small">{metamaskAddress}</div>
-                    <button 
-                      className="btn-copy" 
-                      onClick={() => handleCopyAddress(metamaskAddress, "MetaMask")}
-                    >
-                      📋 Copy Address
-                    </button>
-                  </div>
-                </div>
-                <div className="wallet-hint">
-                  <small>✅ For: USDT (BEP-20), USDC (ERC-20), BRTC (BEP-20)</small>
-                </div>
-              </div>
-
-              {/* TronLink */}
-              <div className="wallet-section">
-                <h3 className="wallet-title">🔺 TronLink (Tron)</h3>
-                <div className="wallet-content">
-                  <div className="qr-code-container">
-                    <QRCodeSVG 
-                      value={tronlinkAddress} 
-                      size={150}
-                      level="H"
-                      includeMargin={true}
-                    />
-                  </div>
-                  <div className="wallet-address-box">
-                    <div className="receive-label">Your TronLink Address</div>
-                    <div className="receive-address small">{tronlinkAddress}</div>
-                    <button 
-                      className="btn-copy" 
-                      onClick={() => handleCopyAddress(tronlinkAddress, "TronLink")}
-                    >
-                      📋 Copy Address
-                    </button>
-                  </div>
-                </div>
-                <div className="wallet-hint">
-                  <small>✅ For: USDT (TRC-20)</small>
-                </div>
-              </div>
-
-              <div className="receive-warning">
-                ⚠️ <strong>Important:</strong> Make sure to send crypto on the correct network! 
-                Wrong network = lost funds.
-              </div>
-            </>
-          )}
-
-          {/* Балансы (показываем всегда) */}
-          <div className="receive-balances">
-            <h3>Your Current Balances:</h3>
-            <div className="balance-list">
-              {user?.balances && Object.entries(user.balances).map(([crypto, balance]) => (
-                <div key={crypto} className="balance-item">
-                  <span className="crypto-name">{crypto}</span>
-                  <span className="crypto-balance">{balance.toFixed(8)}</span>
-                </div>
-              ))}
+        {/* Информация о сети */}
+        <div className="network-info">
+          {crypto === "BRT" ? (
+            <div className="info-box">
+              <p><strong>Network:</strong> Bruno System (off-chain)</p>
+              <p><strong>Receive via:</strong> Email</p>
+              <p className="highlight">Your email: {currentAddress}</p>
             </div>
-          </div>
+          ) : crypto.includes("BEP20") || crypto === "BRTC" ? (
+            <div className="info-box">
+              <p><strong>Network:</strong> BNB Smart Chain (BEP-20)</p>
+              <p><strong>Required:</strong> MetaMask wallet</p>
+            </div>
+          ) : (
+            <div className="info-box">
+              <p><strong>Network:</strong> Ethereum (ERC-20)</p>
+              <p><strong>Required:</strong> MetaMask wallet</p>
+            </div>
+          )}
         </div>
 
+        {/* Адрес или Email */}
+        <div className="address-container">
+          {crypto === "BRT" ? (
+            <div className="email-display">
+              <strong>Your Email Address:</strong>
+              <div className="address-box">{currentAddress}</div>
+              <button type="button" onClick={copyToClipboard} className="copy-btn">
+                📋 Copy Email
+              </button>
+            </div>
+          ) : currentAddress === "Connect MetaMask" ? (
+            <div className="connect-wallet">
+              <p>Connect MetaMask to receive {crypto}</p>
+              <button type="button" onClick={connectMetaMask} className="connect-btn">
+                🦊 Connect MetaMask
+              </button>
+            </div>
+          ) : (
+            <div className="wallet-display">
+              <strong>Your Wallet Address:</strong>
+              <div className="address-box">{currentAddress}</div>
+              <button type="button" onClick={copyToClipboard} className="copy-btn">
+                📋 Copy Address
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Предупреждение */}
+        <div className="warning-box">
+          <strong>⚠️ Important:</strong>
+          <ul>
+            <li>Only send {crypto} to this address</li>
+            <li>Sending other tokens may result in permanent loss</li>
+            {crypto !== "BRT" && <li>Ensure you're using the correct network ({crypto.includes("BEP") ? "BNB Chain" : "Ethereum"})</li>}
+          </ul>
+        </div>
+
+        {/* Кнопка закрытия */}
         <div className="modal-actions">
-          <button className="btn-primary" onClick={onClose}>Done</button>
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
         </div>
       </div>
     </div>

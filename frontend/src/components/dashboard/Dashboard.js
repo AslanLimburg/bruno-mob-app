@@ -335,17 +335,6 @@ const fetchTransactions = async () => {
 
         {/* BRTC DEX Widget */}
         <BRTCDexWidget />
-        {/* Vector of Destiny Button */}
-        <div className="vector-destiny-banner" onClick={() => navigate('/vector-destiny')}>
-          <div className="vector-banner-content">
-            <div className="vector-icon">✨</div>
-            <div className="vector-text">
-              <h3>Vector of Destiny</h3>
-              <p>Discover your personalized astrological forecast</p>
-            </div>
-            <div className="vector-arrow">→</div>
-          </div>
-        </div>
         
         {/* Tabs - Row 1 */}
         <div className="tabs">
@@ -353,12 +342,12 @@ const fetchTransactions = async () => {
           <button className={activeTab==="shop"?"tab active":"tab"} onClick={()=>setActiveTab("shop")}>Shop</button>
           <button className={activeTab==="coupons"?"tab active":"tab"} onClick={()=>setActiveTab("coupons")}>Coupons</button>
           <button className={activeTab==="lottery"?"tab active":"tab"} onClick={()=>setActiveTab("lottery")}>Lottery</button>
-          <button className={activeTab==="transactions"?"tab active":"tab"} onClick={()=>setActiveTab("transactions")}>Transactions</button>
+          <button className={activeTab==="club"?"tab active":"tab"} onClick={()=>setActiveTab("club")}>Club Avalanche</button>
         </div>
         
         {/* Tabs - Row 2 */}
         <div className="tabs tabs-row-2">
-          <button className={activeTab==="club"?"tab active":"tab"} onClick={()=>setActiveTab("club")}>Club Avalanche</button>
+          <button className={activeTab==="transactions"?"tab active":"tab"} onClick={()=>setActiveTab("transactions")}>Transactions</button>
           <button className={activeTab==="challenge"?"tab active":"tab"} onClick={()=>setActiveTab("challenge")}>🎯 Challenge</button>
           <button className={activeTab==="messenger"?"tab active":"tab"} onClick={()=>setActiveTab("messenger")}>💬 BrunoChat</button>
           <button className={activeTab==="starchallenge"?"tab active":"tab"} onClick={()=>setActiveTab("starchallenge")}>⭐ BRT Star Challenge</button>
@@ -370,6 +359,17 @@ const fetchTransactions = async () => {
         {/* Overview Tab */}
         {activeTab==="overview" && (
           <div className="overview-section">
+            {/* Vector of Destiny Banner */}
+            <div className="vector-destiny-banner" onClick={() => navigate('/vector-destiny')}>
+              <div className="vector-banner-content">
+                <div className="vector-icon">✨</div>
+                <div className="vector-text">
+                  <h3>Vector of Destiny</h3>
+                  <p>Discover your personalized astrological forecast</p>
+                </div>
+                <div className="vector-arrow">→</div>
+              </div>
+            </div>
             <div className="overview-cards">
               <div className="overview-card">
                 <div className="overview-card-header">

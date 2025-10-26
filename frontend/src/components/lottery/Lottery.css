@@ -52,43 +52,52 @@
   background: linear-gradient(135deg, #1d2e4a 0%, #0f1e30 100%);
   border: 2px solid #FFA726;
   border-radius: 12px;
-  padding: 30px;
+  padding: 25px;
   margin-bottom: 30px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
 .draw-info {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .draw-info h2 {
   color: #FFA726;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-size: 1.3rem;
 }
 
 .draw-date {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: #94A3B8;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .countdown {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
   color: #FFA726;
 }
 
 .pool-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: auto;
 }
 
 .stat-card {
   background: rgba(255, 167, 38, 0.1);
-  padding: 20px;
+  padding: 15px;
   border-radius: 8px;
   text-align: center;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stat-card.jackpot {

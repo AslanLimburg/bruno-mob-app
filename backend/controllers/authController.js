@@ -117,9 +117,15 @@ class AuthController {
   }
 
   static async login(req, res) {
-    try {
-      const { email, password } = req.body;
-      console.log('🔍 Login attempt for:', email);
+  try {
+    console.log('====== NEW VERSION LOGIN ======');
+    console.log('🔍 RAW req.body:', JSON.stringify(req.body));
+    const { email, password } = req.body;
+    console.log('🔍 After destructure - email:', email, 'type:', typeof email);
+    console.log('🔍 After destructure - password:', password ? 'EXISTS' : 'MISSING');
+    console.log('============================');
+    
+    console.log('🔍 Login attempt for:', email);
 
       const user = await User.findByEmail(email);
       if (!user) {
@@ -179,9 +185,13 @@ class AuthController {
   static async forgotPassword(req, res) {
     try {
       const { email } = req.body;
+      console.log('🔑 Forgot password request for:', email);
+      
       const user = await User.findByEmail(email);
 
       if (user) {
+        console.log('✅ User found:', user.email);
+        
         const token = crypto.randomBytes(32).toString('hex');
         const expiresAt = new Date(Date.now() + EXPIRY.PASSWORD_RESET);
 
@@ -190,13 +200,19 @@ class AuthController {
           [user.id, token, expiresAt]
         );
 
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-        await sendPasswordResetEmailResend(email, user.name || 'User', resetUrl);
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+        console.log('📧 Sending reset email to:', email);
+        console.log('🔗 Reset URL:', resetUrl);
+        
+        const emailResult = await sendPasswordResetEmailResend(email, user.name || 'User', resetUrl);
+        console.log('📧 Email result:', emailResult);
+      } else {
+        console.log('❌ User not found:', email);
       }
 
       res.json({ success: true, message: 'If email exists, reset link sent' });
     } catch (error) {
-      console.error('Forgot password error:', error);
+      console.error('❌ Forgot password error:', error);
       res.status(500).json({ success: false, message: 'Server error' });
     }
   }

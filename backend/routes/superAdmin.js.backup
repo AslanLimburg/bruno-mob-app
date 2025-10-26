@@ -515,7 +515,7 @@ router.get('/system-balances', async (req, res) => {
 
 // POST /api/super-admin/system-transfer - Перевод между системными аккаунтами
 router.post('/system-transfer', async (req, res) => {
-     const { pool } = require('../config/database');
+    const pool = require('../config/database');
     const client = await pool.connect();
     
     try {

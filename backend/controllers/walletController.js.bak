@@ -205,6 +205,13 @@ const disconnectTronWallet = async (req, res) => {
   }
 };
 
+module.exports = {
+  updateWalletAddress,
+  updateTronAddress,
+  getWalletInfo,
+  disconnectWallet,
+  disconnectTronWallet,
+};
 // Get user transactions
 const getTransactions = async (req, res) => {
   const userId = req.user.id;
@@ -244,173 +251,4 @@ const getTransactions = async (req, res) => {
       message: 'Failed to get transactions',
     });
   }
-};
-
-// Send crypto to another user (internal transfer)
-const sendCrypto = async (req, res) => {
-  const senderId = req.user.id;
-  const { recipientEmail, crypto, amount } = req.body;
-
-  // Валидация
-  if (!recipientEmail || !crypto || !amount) {
-    return res.status(400).json({
-      success: false,
-      message: 'Recipient email, crypto and amount are required',
-    });
-  }
-
-  const transferAmount = parseFloat(amount);
-  const serviceFee = 0.02; // BRT
-  const gasFeeAccountId = 11; // gasfee@brunotoken.com
-
-  if (transferAmount <= 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'Amount must be positive',
-    });
-  }
-
-  const client = await pool.connect();
-
-  try {
-    await client.query('BEGIN');
-
-    // 1. Найти получателя
-    const recipientResult = await client.query(
-      'SELECT id, email FROM users WHERE email = $1',
-      [recipientEmail.toLowerCase()]
-    );
-
-    if (recipientResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(404).json({
-        success: false,
-        message: 'Recipient not found',
-      });
-    }
-
-    const recipientId = recipientResult.rows[0].id;
-
-    // Проверка что не отправляем себе
-    if (senderId === recipientId) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot send to yourself',
-      });
-    }
-
-    // 2. Проверить баланс отправителя (amount + fee)
-    const senderBalanceResult = await client.query(
-      'SELECT balance FROM user_balances WHERE user_id = $1 AND crypto = $2',
-      [senderId, crypto]
-    );
-
-    if (senderBalanceResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({
-        success: false,
-        message: `You don't have a ${crypto} balance`,
-      });
-    }
-
-    const senderBalance = parseFloat(senderBalanceResult.rows[0].balance);
-    const totalDeduction = transferAmount + (crypto === 'BRT' ? serviceFee : 0);
-
-    if (senderBalance < totalDeduction) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient ${crypto} balance`,
-      });
-    }
-
-    // 3. Проверить что у получателя есть запись в user_balances
-    const recipientBalanceResult = await client.query(
-      'SELECT balance FROM user_balances WHERE user_id = $1 AND crypto = $2',
-      [recipientId, crypto]
-    );
-
-    if (recipientBalanceResult.rows.length === 0) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({
-        success: false,
-        message: `Recipient doesn't have a ${crypto} wallet initialized`,
-      });
-    }
-
-    // 4. Списать у отправителя
-    await client.query(
-      'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
-      [transferAmount, senderId, crypto]
-    );
-
-    // 5. Зачислить получателю
-    await client.query(
-      'UPDATE user_balances SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
-      [transferAmount, recipientId, crypto]
-    );
-
-    // 6. Создать транзакцию для основного перевода
-    await client.query(
-      `INSERT INTO transactions 
-       (from_user_id, to_user_id, crypto, amount, type, status, metadata)
-       VALUES ($1, $2, $3, $4, 'send', 'completed', $5)`,
-      [senderId, recipientId, crypto, transferAmount, JSON.stringify({ 
-        method: 'internal_transfer'
-      })]
-    );
-
-    // 7. Если это BRT - списать и зачислить service fee
-    if (crypto === 'BRT') {
-      // Списать fee у отправителя
-      await client.query(
-        'UPDATE user_balances SET balance = balance - $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
-        [serviceFee, senderId, 'BRT']
-      );
-
-      // Зачислить fee на gasfee аккаунт
-      await client.query(
-        'UPDATE user_balances SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2 AND crypto = $3',
-        [serviceFee, gasFeeAccountId, 'BRT']
-      );
-
-      // Создать транзакцию для fee
-      await client.query(
-        `INSERT INTO transactions 
-         (from_user_id, to_user_id, crypto, amount, type, status, metadata)
-         VALUES ($1, $2, 'BRT', $3, 'service_fee', 'completed', $4)`,
-        [senderId, gasFeeAccountId, serviceFee, JSON.stringify({ 
-          related_transfer: recipientEmail
-        })]
-      );
-    }
-
-    await client.query('COMMIT');
-
-    res.json({
-      success: true,
-      message: `Successfully sent ${transferAmount} ${crypto} to ${recipientEmail}`,
-    });
-
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Error sending crypto:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to send crypto',
-    });
-  } finally {
-    client.release();
-  }
-};
-
-module.exports = {
-  updateWalletAddress,
-  updateTronAddress,
-  getWalletInfo,
-  disconnectWallet,
-  disconnectTronWallet,
-  getTransactions,
-  sendCrypto,
 };

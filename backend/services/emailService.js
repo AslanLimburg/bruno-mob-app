@@ -40,28 +40,57 @@ const sendEmail = async ({ to, template, data }) => {
   try {
     const emailTemplate = templates[template](data);
     
-    console.log('\n========================================');
-    console.log('📧 EMAIL (Development Mode)');
-    console.log('========================================');
-    console.log('To:', to);
-    console.log('Subject:', emailTemplate.subject);
+    console.log('📧 Sending email to:', to);
     
-    if (data.code) {
-      console.log('\n🔑 VERIFICATION CODE:', data.code);
-      console.log('\n⚠️  USE THIS CODE TO VERIFY EMAIL');
+    // Генерируем HTML
+    let html = '';
+    if (template === 'email_verification') {
+      html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #4F46E5;">✉️ Email Verification</h1>
+          <p>Your verification code is:</p>
+          <div style="background: #F3F4F6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <h2 style="color: #4F46E5; font-size: 32px; letter-spacing: 8px; margin: 0;">${data.code}</h2>
+          </div>
+          <p style="color: #666;">This code will expire in 15 minutes.</p>
+        </div>
+      `;
+    } else if (template === 'password_reset') {
+      html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #4F46E5;">🔐 Reset Password</h1>
+          <p>Click below to reset:</p>
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${data.resetUrl}" style="background: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px;">Reset Password</a>
+          </div>
+        </div>
+      `;
     }
     
-    if (data.resetUrl) {
-      console.log('\n🔗 RESET URL:', data.resetUrl);
-      console.log('\n⚠️  USE THIS LINK TO RESET PASSWORD');
+    // Отправляем через Resend
+    const { data: result, error } = await resend.emails.send({
+      from: 'Bruno Token <onboarding@resend.dev>',
+      to: [to],
+      subject: emailTemplate.subject,
+      html: html
+    });
+    
+    if (error) {
+      console.error('❌ Resend error:', error);
+      // Логируем для fallback
+      if (data.code) console.log('🔑 VERIFICATION CODE:', data.code);
+      if (data.resetUrl) console.log('🔗 RESET URL:', data.resetUrl);
+      return { messageId: 'error-logged' };
     }
     
-    console.log('========================================\n');
+    console.log('✅ Email sent! ID:', result.id);
+    return { messageId: result.id };
     
-    return { messageId: 'dev-mode-no-email-sent' };
   } catch (error) {
-    console.error('Email error:', error);
-    throw error;
+    console.error('❌ Email send error:', error);
+    if (data.code) console.log('🔑 CODE:', data.code);
+    if (data.resetUrl) console.log('🔗 URL:', data.resetUrl);
+    return { messageId: 'error' };
   }
 };
 
@@ -72,6 +101,7 @@ const sendVerificationEmail = async (to, data) => {
 const sendPasswordResetEmail = async (to, data) => {
   return sendEmail({ to, template: 'password_reset', data });
 };
+
 
 // ==========================================
 // PASSWORD RESET (Resend)

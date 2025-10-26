@@ -23,20 +23,33 @@ export const TronWalletProvider = ({ children }) => {
 
   // Connect to TronLink
   const connectTronWallet = async () => {
+    console.log('🔺 Attempting to connect TronLink...');
+    
     if (!isTronLinkInstalled()) {
+      console.log('❌ TronLink not installed');
       setError('TronLink is not installed. Please install it to continue.');
       window.open('https://www.tronlink.org/', '_blank');
       return;
     }
 
+    console.log('✅ TronLink is installed');
     setIsConnecting(true);
     setError(null);
 
     try {
+      console.log('⏳ Waiting for TronLink to be ready...');
+      
       // Wait for TronLink to inject tronWeb
       await new Promise((resolve) => {
         const checkTronWeb = setInterval(() => {
+          console.log('🔍 Checking TronLink status:', {
+            tronWeb: !!window.tronWeb,
+            ready: window.tronWeb?.ready,
+            defaultAddress: window.tronWeb?.defaultAddress
+          });
+          
           if (window.tronWeb && window.tronWeb.ready) {
+            console.log('✅ TronLink is ready!');
             clearInterval(checkTronWeb);
             resolve();
           }
@@ -44,9 +57,16 @@ export const TronWalletProvider = ({ children }) => {
 
         // Timeout after 10 seconds
         setTimeout(() => {
+          console.log('⏰ TronLink timeout reached');
           clearInterval(checkTronWeb);
           resolve();
         }, 10000);
+      });
+
+      console.log('🔍 Final TronLink check:', {
+        tronWeb: !!window.tronWeb,
+        ready: window.tronWeb?.ready,
+        defaultAddress: window.tronWeb?.defaultAddress
       });
 
       if (!window.tronWeb || !window.tronWeb.ready) {
@@ -56,6 +76,8 @@ export const TronWalletProvider = ({ children }) => {
       // Request account access
       const tronWebInstance = window.tronWeb;
       const address = tronWebInstance.defaultAddress.base58;
+
+      console.log('📍 TronLink address:', address);
 
       if (!address) {
         throw new Error('No Tron address found. Please unlock TronLink.');
@@ -67,7 +89,7 @@ export const TronWalletProvider = ({ children }) => {
       // Save to backend
       await saveTronAddressToBackend(address);
 
-      console.log('✅ TronLink connected:', address);
+      console.log('✅ TronLink connected successfully:', address);
     } catch (err) {
       console.error('❌ Error connecting TronLink:', err);
       setError(err.message || 'Failed to connect TronLink');

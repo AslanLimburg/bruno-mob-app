@@ -1,104 +1,34 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import "./Modal.css";
 
-const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionComplete }) => {
-  const cryptos = ["BRT", "USDT-BEP20", "USDC-ERC20", "USDT-TRC20", "BRTC"];
-  const [fromCrypto, setFromCrypto] = useState("USDT-BEP20");
-  const [toCrypto, setToCrypto] = useState("BRT");
+const SwapModal = ({ isOpen, onClose, balances, addNotification, refreshUser }) => {
+  // ✅ ТОЛЬКО 4 криптовалюты (БЕЗ USDT-TRC20)
+  const [fromCrypto, setFromCrypto] = useState("BRT");
+  const [toCrypto, setToCrypto] = useState("USDT-BEP20");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [rates, setRates] = useState({});
-
-  // 🆕 ФУНКЦИЯ МАППИНГА БАЛАНСОВ (БД → SwapModal формат)
-  const mapBalances = (dbBalances) => {
-    if (!dbBalances) return {};
-    
-    return {
-      'BRT': dbBalances.BRT || 0,
-      'BRTC': dbBalances.BRTC || 0,
-      'USDT-BEP20': dbBalances.USDT || 0,      // USDT из БД → USDT-BEP20
-      'USDC-ERC20': dbBalances.USDC || 0,      // USDC из БД → USDC-ERC20
-      'USDT-TRC20': dbBalances.USDT || 0,      // Тот же USDT для TRC20
-      'ETH': dbBalances.ETH || 0,
-      'BTC': dbBalances.BTC || 0
-    };
-  };
-
-  // 🆕 ФУНКЦИЯ ОБРАТНОГО МАППИНГА (SwapModal → БД формат для backend)
-  const mapTokenToBackend = (swapToken) => {
-    const mapping = {
-      'USDT-BEP20': 'USDT',
-      'USDT-TRC20': 'USDT',
-      'USDC-ERC20': 'USDC'
-    };
-    return mapping[swapToken] || swapToken; // Если нет в маппинге, возвращаем как есть
-  };
-
-  // 🆕 Используем маппированные балансы
-  const mappedBalances = mapBalances(balances);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchRates();
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const maxAmount = mappedBalances[fromCrypto] || 0;
+  // Список криптовалют для swap
+  const cryptoOptions = [
+    { value: "BRT", label: "BRT (Bruno System)" },
+    { value: "USDT-BEP20", label: "USDT (BEP-20)" },
+    { value: "USDC-ERC20", label: "USDC (ERC-20)" },
+    { value: "BRTC", label: "BRTC (BEP-20)" }
+  ];
 
-  // Получить курсы обмена
-  const fetchRates = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/swap/rates`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setRates(response.data.rates || {});
-    } catch (error) {
-      console.error("Failed to fetch rates:", error);
-      // Fallback курсы
-      setRates({
-        "BRT": 1,
-        "USDT-BEP20": 1,
-        "USDC-ERC20": 1,
-        "USDT-TRC20": 1,
-        "BRTC": 0.01
-      });
-    }
-  };
+  // Расчет курса (1:1 для всех)
+  const exchangeRate = 1;
+  const estimatedReceive = parseFloat(amount || 0) * exchangeRate;
 
-  // Рассчитать сумму получения
-  const calculateReceiveAmount = () => {
-    if (!amount || parseFloat(amount) <= 0) return "0.00000000";
+  const maxAmount = balances[fromCrypto] || 0;
 
-    const fromRate = rates[fromCrypto] || 1;
-    const toRate = rates[toCrypto] || 1;
-    
-    // Конвертация: amount * (fromRate / toRate) * (1 - fee)
-    const fee = 0.005; // 0.5%
-    const result = parseFloat(amount) * (fromRate / toRate) * (1 - fee);
-    
-    return result.toFixed(8);
-  };
-
-  // Переключить валюты местами
-  const handleSwitch = () => {
-    setFromCrypto(toCrypto);
-    setToCrypto(fromCrypto);
-  };
-
-  const handleMaxClick = () => {
-    setAmount(maxAmount.toFixed(8));
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSwap = async (e) => {
     e.preventDefault();
-    
-    if (!amount || parseFloat(amount) <= 0) {
-      addNotification("error", "Please enter a valid amount");
+
+    if (fromCrypto === toCrypto) {
+      addNotification("error", "Cannot swap same cryptocurrency");
       return;
     }
 
@@ -107,312 +37,121 @@ const SwapModal = ({ isOpen, onClose, balances, addNotification, onTransactionCo
       return;
     }
 
-    if (fromCrypto === toCrypto) {
-      addNotification("error", "Cannot swap same cryptocurrency");
-      return;
-    }
-
-    setLoading(true);
-
     try {
-      // Определяем тип swap
-      const fromIsBRT = fromCrypto === "BRT";
-      const toIsBRT = toCrypto === "BRT";
-      const fromIsCrypto = !fromIsBRT;
-      const toIsCrypto = !toIsBRT;
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/wallet/swap`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fromCrypto,
+          toCrypto,
+          amount: parseFloat(amount)
+        })
+      });
 
-      // 1. CRYPTO → BRT (через BRTC)
-      if (fromIsCrypto && toIsBRT) {
-        await swapCryptoToBRT();
-      }
-      // 2. BRT → CRYPTO (через BRTC)
-      else if (fromIsBRT && toIsCrypto) {
-        await swapBRTToCrypto();
-      }
-      // 3. CRYPTO → CRYPTO (через BRTC мост)
-      else if (fromIsCrypto && toIsCrypto) {
-        await swapCryptoToCrypto();
-      }
-      // 4. BRT → BRTC или BRTC → BRT
-      else {
-        await swapBRTandBRTC();
-      }
+      const data = await response.json();
 
+      if (data.success) {
+        addNotification("success", `Successfully swapped ${amount} ${fromCrypto} to ${toCrypto}`);
+        await refreshUser();
+        onClose();
+        setAmount("");
+      } else {
+        addNotification("error", data.message || "Swap failed");
+      }
     } catch (error) {
       console.error("Swap error:", error);
-      addNotification("error", error.message || "Swap failed");
+      addNotification("error", "An error occurred during swap");
     } finally {
       setLoading(false);
     }
   };
 
-  // CRYPTO → BRT (юзер покупает BRT)
-  const swapCryptoToBRT = async () => {
-    const isTron = fromCrypto.includes("TRC20");
-    
-    try {
-      // Шаг 1: Отправить crypto на Treasury
-      let txHash;
-      
-      if (isTron) {
-        // TronLink
-        if (!window.tronWeb || !window.tronWeb.ready) {
-          throw new Error("Please install TronLink wallet");
-        }
-
-        const treasuryAddress = "TXYZopYRdj2D9XRtbG4uXGobSJpT2fU4Gh"; // TODO: получить из backend
-        const amountSun = window.tronWeb.toSun(amount);
-
-        const tx = await window.tronWeb.trx.sendTransaction(treasuryAddress, amountSun);
-        
-        if (!tx.result) throw new Error("Transaction failed");
-        txHash = tx.txid;
-        
-      } else {
-        // MetaMask
-        if (!window.ethereum) {
-          throw new Error("Please install MetaMask wallet");
-        }
-
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const treasuryAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"; // TODO: получить из backend
-        const amountWei = `0x${(parseFloat(amount) * 1e18).toString(16)}`;
-
-        txHash = await window.ethereum.request({
-          method: 'eth_sendTransaction',
-          params: [{
-            from: accounts[0],
-            to: treasuryAddress,
-            value: amountWei,
-            gas: '0x5208',
-          }],
-        });
-      }
-
-      // 🆕 Используем обратный маппинг для backend
-      const backendFromToken = mapTokenToBackend(fromCrypto);
-      const backendToToken = mapTokenToBackend(toCrypto);
-
-      // Шаг 2: Отправить на backend для зачисления BRT
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/swap/crypto-to-brt`,
-        {
-          fromToken: backendFromToken,
-          toToken: backendToToken,
-          amount: parseFloat(amount),
-          txHash,
-          chain: isTron ? "tron" : "ethereum"
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        const receiveAmount = calculateReceiveAmount();
-        addNotification("success", `Swapped ${amount} ${fromCrypto} to ${receiveAmount} ${toCrypto}! (Fee: 0.5%)`);
-        
-        setAmount("");
-        
-        if (onTransactionComplete) {
-          await onTransactionComplete();
-        }
-        
-        setTimeout(() => onClose(), 2000);
-      }
-
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // BRT → CRYPTO (юзер продаёт BRT)
-  const swapBRTToCrypto = async () => {
-    try {
-      // Получаем адрес получателя от пользователя
-      const recipientAddress = prompt(
-        `Enter your ${toCrypto.includes("TRC20") ? "TronLink" : "MetaMask"} address:`
-      );
-
-      if (!recipientAddress) {
-        throw new Error("Address is required");
-      }
-
-      // Валидация адреса
-      const isTron = toCrypto.includes("TRC20");
-      if (isTron && !recipientAddress.startsWith("T")) {
-        throw new Error("Invalid Tron address");
-      }
-      if (!isTron && !recipientAddress.startsWith("0x")) {
-        throw new Error("Invalid Ethereum address");
-      }
-
-      // 🆕 Используем обратный маппинг для backend
-      const backendFromToken = mapTokenToBackend(fromCrypto);
-      const backendToToken = mapTokenToBackend(toCrypto);
-
-      // Отправить на backend
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/swap/brt-to-crypto`,
-        {
-          fromToken: backendFromToken,
-          toToken: backendToToken,
-          amount: parseFloat(amount),
-          recipientAddress
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        const receiveAmount = calculateReceiveAmount();
-        addNotification("success", `Swapped ${amount} ${fromCrypto} to ${receiveAmount} ${toCrypto}! Check your wallet.`);
-        
-        setAmount("");
-        
-        if (onTransactionComplete) {
-          await onTransactionComplete();
-        }
-        
-        setTimeout(() => onClose(), 2000);
-      }
-
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // CRYPTO → CRYPTO (через BRTC мост)
-  const swapCryptoToCrypto = async () => {
-    try {
-      addNotification("info", "Crypto to Crypto swap requires 2 transactions through BRTC bridge...");
-      
-      // TODO: Реализовать двойной swap через BRTC
-      // Шаг 1: Crypto → BRTC
-      // Шаг 2: BRTC → Crypto
-      
-      throw new Error("Crypto to Crypto swap not yet implemented. Please swap to BRT first.");
-
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // BRT ↔ BRTC
-  const swapBRTandBRTC = async () => {
-    try {
-      // 🆕 Используем обратный маппинг для backend
-      const backendFromToken = mapTokenToBackend(fromCrypto);
-      const backendToToken = mapTokenToBackend(toCrypto);
-
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/swap/brt-brtc`,
-        {
-          fromToken: backendFromToken,
-          toToken: backendToToken,
-          amount: parseFloat(amount)
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        const receiveAmount = calculateReceiveAmount();
-        addNotification("success", `Swapped ${amount} ${fromCrypto} to ${receiveAmount} ${toCrypto}!`);
-        
-        setAmount("");
-        
-        if (onTransactionComplete) {
-          await onTransactionComplete();
-        }
-        
-        setTimeout(() => onClose(), 2000);
-      }
-
-    } catch (error) {
-      throw error;
-    }
+  const switchCryptos = () => {
+    setFromCrypto(toCrypto);
+    setToCrypto(fromCrypto);
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content swap-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Swap Crypto</h2>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="modal-form">
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2>Swap Crypto</h2>
+        <form onSubmit={handleSwap}>
+          {/* From */}
           <div className="form-group">
-            <label>
-              From
-              <span className="balance-info">
-                Available: {maxAmount.toFixed(8)} {fromCrypto}
-              </span>
-            </label>
-            <div className="swap-input-group">
-              <input
-                type="number"
-                step="0.00000001"
-                placeholder="0.00000000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-              />
-              <select value={fromCrypto} onChange={(e) => setFromCrypto(e.target.value)}>
-                {cryptos.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <button type="button" className="btn-max-inline" onClick={handleMaxClick}>
-                MAX
-              </button>
-            </div>
+            <label>From:</label>
+            <select 
+              value={fromCrypto} 
+              onChange={(e) => setFromCrypto(e.target.value)}
+            >
+              {cryptoOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <small>Available: {maxAmount.toFixed(5)} {fromCrypto}</small>
           </div>
 
-          <div className="swap-switch-container">
-            <button type="button" className="btn-switch" onClick={handleSwitch}>
-              ⇅
+          {/* Amount */}
+          <div className="form-group">
+            <label>Amount:</label>
+            <input
+              type="number"
+              step="0.00001"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              required
+            />
+          </div>
+
+          {/* Switch Button */}
+          <div className="swap-switch">
+            <button type="button" onClick={switchCryptos} className="switch-btn">
+              🔄 Switch
             </button>
           </div>
 
+          {/* To */}
           <div className="form-group">
-            <label>To (estimated)</label>
-            <div className="swap-input-group">
-              <input
-                type="text"
-                value={calculateReceiveAmount()}
-                readOnly
-                className="readonly-input"
-              />
-              <select value={toCrypto} onChange={(e) => setToCrypto(e.target.value)}>
-                {cryptos.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+            <label>To:</label>
+            <select 
+              value={toCrypto} 
+              onChange={(e) => setToCrypto(e.target.value)}
+            >
+              {cryptoOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <div className="exchange-rate-info">
-            <p>Exchange Rate</p>
-            <p className="rate-value">
-              1 {fromCrypto} = {((rates[fromCrypto] || 1) / (rates[toCrypto] || 1)).toFixed(8)} {toCrypto}
-            </p>
-            <p className="fee-info">Fee: 0.5%</p>
+          {/* Estimated Receive */}
+          <div className="estimate-box">
+            <p>You will receive:</p>
+            <strong>{estimatedReceive.toFixed(5)} {toCrypto}</strong>
+            <small>Exchange rate: 1 {fromCrypto} = {exchangeRate} {toCrypto}</small>
           </div>
 
-          <div className="swap-route-info">
-            <small>
-              {fromCrypto !== "BRT" && toCrypto === "BRT" && "📥 Route: Send crypto → Treasury → Receive BRT"}
-              {fromCrypto === "BRT" && toCrypto !== "BRT" && "📤 Route: BRT deducted → Treasury sends crypto"}
-              {fromCrypto !== "BRT" && toCrypto !== "BRT" && fromCrypto !== "BRTC" && toCrypto !== "BRTC" && "🔄 Route: Crypto → BRTC → Crypto (2 transactions)"}
-            </small>
+          {/* Exchange Info */}
+          <div className="info-box">
+            <p><strong>💡 Note:</strong> All cryptocurrencies are exchanged at 1:1 rate</p>
+            <p><strong>Calculation:</strong> 1 BRT = 1 USD</p>
           </div>
 
+          {/* Кнопки */}
           <div className="modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>
+            <button type="button" onClick={onClose} disabled={loading}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button type="submit" disabled={loading}>
               {loading ? "Swapping..." : "Swap"}
             </button>
           </div>

@@ -18,6 +18,7 @@ const SystemBalances = () => {
 
     const systemAccountsInfo = {
         1: { name: 'Admin', email: 'admin@brunotoken.com', color: '#8b5cf6' },
+        5: { name: 'Aslanlimburg', email: 'aslanlimburg@mail.ru', color: '#ec4899' },
         11: { name: 'Gas Fee', email: 'gasfee@brunotoken.com', color: '#3b82f6' },
         17: { name: 'Treasury', email: 'treasury@brunotoken.com', color: '#10b981' },
         18: { name: 'BRT Star', email: 'brtstar@brunotoken.com', color: '#f59e0b' }

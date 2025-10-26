@@ -92,7 +92,7 @@ class StarsVotingService {
       await client.query(
         `UPDATE user_balances 
          SET balance = balance + $1, updated_at = NOW()
-         WHERE user_id = 11 AND crypto = 'BRT'`, // id=11 = gasfee@brunotoken.com
+         WHERE user_id = 2 AND crypto = 'BRT'`, // id=2 = gasfee@brunotoken.com
         [gasFee]
       );
       
@@ -109,7 +109,7 @@ class StarsVotingService {
       await client.query(
         `INSERT INTO transactions 
          (from_user_id, to_user_id, crypto, amount, type, status, reference_id, reference_type)
-         VALUES ($1, 11, 'BRT', $2, 'gas_fee', 'completed', $3, 'photo')`,
+         VALUES ($1, 2, 'BRT', $2, 'gas_fee', 'completed', $3, 'photo')`,
         [fromUserId, gasFee, photoId]
       );
       

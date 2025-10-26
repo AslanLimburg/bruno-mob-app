@@ -13,6 +13,9 @@ import './Lottery.css';
 const Lottery = () => {
   const { user } = useAuth();
   
+  // Check if user is GS-I member (has clan membership)
+  const isGSIMember = user?.clan || user?.role === 'moderator';
+  
   const [currentDraw, setCurrentDraw] = useState(null);
   const [selectedNumbers, setSelectedNumbers] = useState({
     white: [],
@@ -102,6 +105,31 @@ const Lottery = () => {
     return (
       <div className="lottery-container">
         <div className="loading">Loading lottery...</div>
+      </div>
+    );
+  }
+  
+  // Show access denied message for non-GS-I members
+  if (!isGSIMember) {
+    return (
+      <div className="lottery-container">
+        <div className="access-denied" style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          background: 'linear-gradient(135deg, #1d2e4a 0%, #0f1e30 100%)',
+          border: '2px solid #FFA726',
+          borderRadius: '12px',
+          marginTop: '40px'
+        }}>
+          <div style={{ fontSize: '80px', marginBottom: '20px' }}>🔒</div>
+          <h2 style={{ color: '#FFA726', fontSize: '2rem', marginBottom: '20px' }}>
+            GS-I Members Only
+          </h2>
+          <p style={{ color: '#94A3B8', fontSize: '1.1rem', lineHeight: '1.6' }}>
+            Powerball Lottery is exclusively available to GS-I members.<br />
+            Join a clan to access this premium feature.
+          </p>
+        </div>
       </div>
     );
   }

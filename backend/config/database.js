@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'brunotoken',
+  database: process.env.DB_NAME || 'bruno_token_app',
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT || 5432,
   max: 20,
@@ -40,5 +40,19 @@ async function queryWithRetry(text, params, maxRetries = 3) {
     }
   }
 }
+async function transaction(callback) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
-module.exports = { pool, query: queryWithRetry };
+module.exports = { pool, query: queryWithRetry, transaction };
