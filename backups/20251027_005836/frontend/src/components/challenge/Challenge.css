@@ -1,0 +1,735 @@
+/* Challenge Container */
+.challenge-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.challenge-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.challenge-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  color: #ff6b35;
+}
+
+.challenge-header p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Tabs */
+.challenge-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s;
+  border-radius: 8px 8px 0 0;
+}
+
+.tab-button:hover {
+  background: #f5f5f5;
+  color: #ff6b35;
+}
+
+.tab-button.active {
+  background: #ff6b35;
+  color: white;
+}
+
+.challenge-content {
+  min-height: 400px;
+}
+
+/* Create Challenge */
+.create-challenge {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.create-challenge h2 {
+  margin-bottom: 20px;
+  color: #ff6b35;
+}
+
+.challenge-form {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #ff6b35;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 5px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.option-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.option-input input {
+  flex: 1;
+}
+
+.remove-option-btn {
+  padding: 10px 15px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.add-option-btn {
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: normal !important;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Browse Challenges */
+.browse-challenges {
+  width: 100%;
+}
+
+.browse-header {
+  margin-bottom: 30px;
+}
+
+.browse-header h2 {
+  margin-bottom: 20px;
+  color: #ff6b35;
+}
+
+.browse-filters {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.status-filter {
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.challenge-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.challenge-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.challenge-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.challenge-card-header h3 {
+  flex: 1;
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-badge.draft { background: #e0e0e0; color: #666; }
+.status-badge.open { background: #4CAF50; color: white; }
+.status-badge.closed_for_bets { background: #ff9800; color: white; }
+.status-badge.resolved { background: #2196F3; color: white; }
+
+.challenge-description {
+  color: #666;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.challenge-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #999;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.challenge-range {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.challenge-range small {
+  color: #666;
+}
+
+.view-details-btn {
+  width: 100%;
+  padding: 10px;
+  background: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Challenge Details */
+.challenge-details {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.back-btn {
+  padding: 10px 20px;
+  background: #eee;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.back-btn:hover {
+  background: #ddd;
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.details-header h2 {
+  flex: 1;
+  color: #ff6b35;
+}
+
+.details-info {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.description {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.info-item {
+  text-align: center;
+}
+
+.info-label {
+  display: block;
+  font-size: 0.9rem;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.info-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.options-section {
+  margin-bottom: 30px;
+}
+
+.options-section h3 {
+  margin-bottom: 20px;
+  color: #ff6b35;
+}
+
+.options-list {
+  display: grid;
+  gap: 15px;
+}
+
+.option-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.option-card.winner {
+  border: 3px solid #4CAF50;
+  background: linear-gradient(to right, #f0f9f0, white);
+}
+
+.option-header h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.option-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.bet-form-section {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.bet-form-section h3 {
+  margin-bottom: 20px;
+  color: #ff6b35;
+}
+
+.bet-form {
+  max-width: 500px;
+}
+
+.place-bet-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.place-bet-btn:hover {
+  transform: translateY(-2px);
+}
+
+.place-bet-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* My Bets */
+.my-bets {
+  width: 100%;
+}
+
+.my-bets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.my-bets-header h2 {
+  color: #ff6b35;
+}
+
+.bets-list {
+  display: grid;
+  gap: 20px;
+}
+
+.bet-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-left: 5px solid #eee;
+}
+
+.bet-card.won {
+  border-left-color: #4CAF50;
+  background: linear-gradient(to right, #f0f9f0, white);
+}
+
+.bet-card.lost {
+  border-left-color: #ff4444;
+}
+
+.bet-card.active {
+  border-left-color: #ff9800;
+}
+
+.bet-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.bet-card-header h3 {
+  flex: 1;
+  margin: 0;
+  color: #333;
+}
+
+.bet-details {
+  display: grid;
+  gap: 15px;
+}
+
+.bet-option {
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.bet-option .label {
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+.bet-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.stat-value.win { color: #4CAF50; font-weight: 700; }
+.stat-value.loss { color: #ff4444; font-weight: 700; }
+.stat-value.profit { color: #2196F3; font-weight: 700; }
+
+.bet-date {
+  text-align: center;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+/* My Challenges */
+.my-challenges {
+  width: 100%;
+}
+
+.my-challenges-header {
+  margin-bottom: 30px;
+}
+
+.my-challenges-header h2 {
+  color: #ff6b35;
+}
+
+.challenges-list {
+  display: grid;
+  gap: 20px;
+}
+
+.my-challenge-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.challenge-actions {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.action-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.open-btn { background: #4CAF50; color: white; }
+.close-btn { background: #ff9800; color: white; }
+.resolve-btn { background: #2196F3; color: white; }
+
+.resolved-label {
+  color: #4CAF50;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.challenge-date {
+  text-align: center;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  margin-top: 15px;
+}
+
+/* Messages */
+.message {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Loading & Empty States */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.no-challenges,
+.no-bets {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.no-challenges p,
+.no-bets p {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.info-message,
+.resolved-message {
+  padding: 20px;
+  background: #e3f2fd;
+  border-left: 4px solid #2196F3;
+  border-radius: 8px;
+  color: #1565c0;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .challenges-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .challenge-stats,
+  .bet-stats,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .challenge-tabs {
+    justify-content: center;
+  }
+  
+  .tab-button {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* Fix white text on white background */
+.form-group label {
+  color: #333 !important;
+}
+
+.form-group select,
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+  color: #333 !important;
+}
+
+.radio-group label {
+  color: #333 !important;
+}
+
+.radio-content span {
+  color: #666 !important;
+}
+
+/* Fix input text color - orange */
+.form-group input[type="number"] {
+  color: #ff6b35 !important;
+  background: white !important;
+}
+
+.form-group input[type="text"] {
+  background: white !important;
+}
+
+/* Fix input text color - orange */
+.form-group input[type="number"] {
+  color: #ff6b35 !important;
+  background: white !important;
+}
+
+.form-group input[type="text"] {
+  background: white !important;
+}

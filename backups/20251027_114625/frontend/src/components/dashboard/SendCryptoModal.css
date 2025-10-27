@@ -1,0 +1,194 @@
+/* SendCryptoModal.css - Стили в соответствии с существующим Modal.css */
+
+.send-crypto-modal .form-group {
+  margin-bottom: 20px;
+}
+
+.send-crypto-modal .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.send-crypto-modal .form-control {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.send-crypto-modal .form-control:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: rgba(15, 23, 42, 0.8);
+}
+
+.send-crypto-modal .form-control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-crypto-modal .balance-info {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.send-crypto-modal .amount-input-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.send-crypto-modal .amount-input-wrapper input {
+  flex: 1;
+}
+
+.send-crypto-modal .btn-max {
+  padding: 12px 20px;
+  background-color: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  color: #3b82f6;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.send-crypto-modal .btn-max:hover:not(:disabled) {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+.send-crypto-modal .btn-max:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-crypto-modal .gas-estimate {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.send-crypto-modal .gas-row {
+  display: flex;
+  justify-content: space-between;
+  color: #cbd5e1;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.send-crypto-modal .gas-row:last-child {
+  margin-bottom: 0;
+}
+
+.send-crypto-modal .gas-row.small {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.send-crypto-modal .warning-message {
+  background-color: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #fbbf24;
+  font-size: 14px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.send-crypto-modal .btn-switch-network {
+  padding: 8px 16px;
+  background-color: #fbbf24;
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.send-crypto-modal .btn-switch-network:hover {
+  background-color: #f59e0b;
+}
+
+.send-crypto-modal .success-message {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.send-crypto-modal .success-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 48px;
+  color: #fff;
+  animation: scaleIn 0.4s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.send-crypto-modal .success-message h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 12px 0;
+}
+
+.send-crypto-modal .success-message p {
+  color: #94a3b8;
+  margin: 0 0 24px 0;
+  font-size: 16px;
+}
+
+.send-crypto-modal .tx-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.send-crypto-modal .tx-link:hover {
+  background-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .send-crypto-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+}

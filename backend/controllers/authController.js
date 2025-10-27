@@ -33,15 +33,15 @@ class AuthController {
 
       const user = await User.create({ email, password, name, referralCode });
 
-      const code = generateVerificationCode();
+      const token = generateVerificationCode();
       const expiresAt = new Date(Date.now() + EXPIRY.EMAIL_VERIFICATION);
 
       await query(
-        `INSERT INTO email_verifications (user_id, code, expires_at) VALUES ($1, $2, $3)`,
-        [user.id, code, expiresAt]
+        `INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+        [user.id, token, expiresAt]
       );
 
-      await sendEmail({ to: email, template: 'email_verification', data: { code, email } });
+      await sendEmail({ to: email, template: 'email_verification', data: { code: token, email } });
 
       res.status(201).json({
         success: true,
@@ -65,7 +65,7 @@ class AuthController {
 
       const result = await query(
         `SELECT * FROM email_verifications 
-         WHERE user_id = $1 AND code = $2 AND used = false AND expires_at > NOW()
+         WHERE user_id = $1 AND token = $2 AND verified = false AND expires_at > NOW()
          ORDER BY created_at DESC LIMIT 1`,
         [user.id, code]
       );
@@ -74,7 +74,7 @@ class AuthController {
         return res.status(400).json({ success: false, message: 'Invalid or expired code' });
       }
 
-      await query(`UPDATE email_verifications SET used = true WHERE id = $1`, [result.rows[0].id]);
+      await query(`UPDATE email_verifications SET verified = true, verified_at = NOW() WHERE id = $1`, [result.rows[0].id]);
       await User.verifyEmail(user.id);
 
       const token = generateToken(user.id);
@@ -99,15 +99,15 @@ class AuthController {
         return res.status(400).json({ success: false, message: 'Email already verified' });
       }
 
-      const code = generateVerificationCode();
+      const token = generateVerificationCode();
       const expiresAt = new Date(Date.now() + EXPIRY.EMAIL_VERIFICATION);
 
       await query(
-        `INSERT INTO email_verifications (user_id, code, expires_at) VALUES ($1, $2, $3)`,
-        [user.id, code, expiresAt]
+        `INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)`,
+        [user.id, token, expiresAt]
       );
 
-      await sendEmail({ to: email, template: 'email_verification', data: { code, email } });
+      await sendEmail({ to: email, template: 'email_verification', data: { code: token, email } });
 
       res.json({ success: true, message: 'Code sent' });
     } catch (error) {
@@ -303,6 +303,34 @@ class AuthController {
   // Google OAuth Failure Handler
   static async googleAuthFailure(req, res) {
     res.redirect('http://localhost:3000/login?error=google_auth_failed');
+  }
+
+  // Delete Account (Required by App Stores)
+  static async deleteAccount(req, res) {
+    try {
+      const userId = req.userId;
+
+      console.log('🗑️ Delete account request for user ID:', userId);
+
+      // Удаляем связанные данные
+      await query('DELETE FROM email_verifications WHERE user_id = $1', [userId]);
+      await query('DELETE FROM password_resets WHERE user_id = $1', [userId]);
+      await query('DELETE FROM messenger_contacts WHERE user_id = $1 OR contact_id = $1', [userId]);
+      await query('DELETE FROM messages WHERE from_user_id = $1 OR to_user_id = $1', [userId]);
+      
+      // Удаляем пользователя
+      await query('DELETE FROM users WHERE id = $1', [userId]);
+
+      console.log('✅ Account deleted successfully:', userId);
+
+      res.json({
+        success: true,
+        message: 'Account deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete account error:', error);
+      res.status(500).json({ success: false, message: 'Failed to delete account' });
+    }
   }
 }
 

@@ -1,0 +1,142 @@
+/* CryptoBalances Container - синий фон */
+.crypto-balances-container {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+}
+
+/* Total Balance Header */
+.total-balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.total-balance-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.total-balance-amount {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Crypto List - строчный список */
+.crypto-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Crypto Item - одна строка */
+.crypto-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.crypto-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
+}
+
+/* Crypto Icon */
+.crypto-icon {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+/* Crypto Info */
+.crypto-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.crypto-name-network {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* Crypto Name - белые буквы */
+.crypto-name {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Crypto Network - белые буквы с прозрачностью */
+.crypto-network {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+/* Crypto Balance - белые буквы */
+.crypto-balance {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .crypto-balances-container {
+    padding: 16px;
+  }
+
+  .total-balance-amount {
+    font-size: 22px;
+  }
+
+  .crypto-item {
+    padding: 12px;
+  }
+
+  .crypto-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .crypto-name {
+    font-size: 16px;
+  }
+
+  .crypto-balance {
+    font-size: 14px;
+  }
+}

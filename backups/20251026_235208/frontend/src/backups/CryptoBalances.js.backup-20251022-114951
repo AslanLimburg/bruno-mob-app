@@ -1,0 +1,358 @@
+import React, { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+import { useWallet } from '../contexts/WalletContext';
+import { TOKENS, ERC20_ABI, formatTokenAmount } from '../config/tokens.config';
+
+const CryptoBalances = () => {
+  const { address, provider, chainId, connectWallet, disconnectWallet, isConnected } = useWallet();
+  const [balances, setBalances] = useState({
+    USDT_BSC: '0',
+    USDC_ETH: '0',
+    BRTC: '0',
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Fetch token balance
+  const fetchTokenBalance = async (tokenConfig) => {
+    if (!provider || !address) return '0';
+
+    try {
+      // Skip if wrong chain
+      if (chainId !== tokenConfig.chainId) {
+        return '0';
+      }
+
+      // Skip BRTC if not deployed yet
+      if (tokenConfig.symbol === 'BRTC' && tokenConfig.address === '0x0000000000000000000000000000000000000000') {
+        return '0';
+      }
+
+      const contract = new ethers.Contract(tokenConfig.address, ERC20_ABI, provider);
+      const balance = await contract.balanceOf(address);
+      return formatTokenAmount(balance.toString(), tokenConfig.decimals);
+    } catch (error) {
+      console.error(`Error fetching ${tokenConfig.symbol} balance:`, error);
+      return '0';
+    }
+  };
+
+  // Load all balances
+  const loadBalances = async () => {
+    if (!address || !provider) return;
+
+    setLoading(true);
+    try {
+      const usdtBalance = await fetchTokenBalance(TOKENS.USDT_BSC);
+      const usdcBalance = await fetchTokenBalance(TOKENS.USDC_ETH);
+      const brtcBalance = await fetchTokenBalance(TOKENS.BRTC);
+
+      setBalances({
+        USDT_BSC: usdtBalance,
+        USDC_ETH: usdcBalance,
+        BRTC: brtcBalance,
+      });
+    } catch (error) {
+      console.error('Error loading balances:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-load balances when wallet connects
+  useEffect(() => {
+    if (isConnected) {
+      loadBalances();
+    }
+  }, [address, chainId, isConnected]);
+
+  // Format address for display
+  const formatAddress = (addr) => {
+    if (!addr) return '';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  return (
+    <div className="crypto-balances">
+      <div className="crypto-header">
+        <h3>💎 Crypto Wallets</h3>
+        {!isConnected ? (
+          <button onClick={connectWallet} className="btn-connect-wallet">
+            Connect MetaMask
+          </button>
+        ) : (
+          <div className="wallet-info">
+            <span className="wallet-address">{formatAddress(address)}</span>
+            <button onClick={disconnectWallet} className="btn-disconnect">
+              Disconnect
+            </button>
+          </div>
+        )}
+      </div>
+
+      {isConnected && (
+        <>
+          <div className="crypto-balances-grid">
+            {/* USDT (BEP-20) */}
+            <div className="crypto-card">
+              <div className="crypto-icon">
+                <img src="/images/tokens/usdt.png" alt="USDT" />
+              </div>
+              <div className="crypto-info">
+                <h4>USDT</h4>
+                <p className="crypto-chain">Binance Smart Chain</p>
+              </div>
+              <div className="crypto-balance">
+                {loading ? (
+                  <div className="loading-spinner">⏳</div>
+                ) : (
+                  <>
+                    <span className="balance-amount">{balances.USDT_BSC}</span>
+                    <span className="balance-symbol">USDT</span>
+                  </>
+                )}
+              </div>
+              {chainId !== 56 && (
+                <p className="network-warning">⚠️ Switch to BSC</p>
+              )}
+            </div>
+
+            {/* USDC (ERC-20) */}
+            <div className="crypto-card">
+              <div className="crypto-icon">
+                <img src="/images/tokens/usdc.png" alt="USDC" />
+              </div>
+              <div className="crypto-info">
+                <h4>USDC</h4>
+                <p className="crypto-chain">Ethereum</p>
+              </div>
+              <div className="crypto-balance">
+                {loading ? (
+                  <div className="loading-spinner">⏳</div>
+                ) : (
+                  <>
+                    <span className="balance-amount">{balances.USDC_ETH}</span>
+                    <span className="balance-symbol">USDC</span>
+                  </>
+                )}
+              </div>
+              {chainId !== 1 && (
+                <p className="network-warning">⚠️ Switch to Ethereum</p>
+              )}
+            </div>
+
+            {/* BRTC (BEP-20) */}
+            <div className="crypto-card brtc-card">
+              <div className="crypto-icon">
+                <img src="/images/tokens/brtc.png" alt="BRTC" />
+              </div>
+              <div className="crypto-info">
+                <h4>BRTC</h4>
+                <p className="crypto-chain">Binance Smart Chain</p>
+              </div>
+              <div className="crypto-balance">
+                {loading ? (
+                  <div className="loading-spinner">⏳</div>
+                ) : TOKENS.BRTC.address === '0x0000000000000000000000000000000000000000' ? (
+                  <p className="coming-soon">Coming Soon</p>
+                ) : (
+                  <>
+                    <span className="balance-amount">{balances.BRTC}</span>
+                    <span className="balance-symbol">BRTC</span>
+                  </>
+                )}
+              </div>
+              {chainId !== 56 && TOKENS.BRTC.address !== '0x0000000000000000000000000000000000000000' && (
+                <p className="network-warning">⚠️ Switch to BSC</p>
+              )}
+            </div>
+          </div>
+
+          <button onClick={loadBalances} className="btn-refresh" disabled={loading}>
+            {loading ? '⏳ Loading...' : '🔄 Refresh Balances'}
+          </button>
+        </>
+      )}
+
+      <style jsx>{`
+        .crypto-balances {
+          background: rgba(255, 167, 38, 0.1);
+          border: 2px solid #FFA726;
+          border-radius: 16px;
+          padding: 24px;
+          margin: 20px 0;
+        }
+
+        .crypto-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        .crypto-header h3 {
+          color: #FFA726;
+          margin: 0;
+        }
+
+        .btn-connect-wallet {
+          background: linear-gradient(135deg, #FFA726, #FFB84D);
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s;
+        }
+
+        .btn-connect-wallet:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255, 167, 38, 0.4);
+        }
+
+        .wallet-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .wallet-address {
+          background: rgba(255, 255, 255, 0.1);
+          padding: 8px 16px;
+          border-radius: 8px;
+          color: #FFA726;
+          font-family: monospace;
+        }
+
+        .btn-disconnect {
+          background: rgba(255, 0, 0, 0.2);
+          color: white;
+          border: 1px solid rgba(255, 0, 0, 0.4);
+          padding: 8px 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+
+        .btn-disconnect:hover {
+          background: rgba(255, 0, 0, 0.4);
+        }
+
+        .crypto-balances-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 16px;
+          margin-bottom: 20px;
+        }
+
+        .crypto-card {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 167, 38, 0.3);
+          border-radius: 12px;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          transition: all 0.3s;
+        }
+
+        .crypto-card:hover {
+          border-color: #FFA726;
+          transform: translateY(-2px);
+        }
+
+        .brtc-card {
+          border-color: #FFD700;
+        }
+
+        .brtc-card:hover {
+          border-color: #FFA500;
+        }
+
+        .crypto-icon img {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+        }
+
+        .crypto-info h4 {
+          color: #FFA726;
+          margin: 0;
+          font-size: 18px;
+        }
+
+        .crypto-chain {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 12px;
+          margin: 4px 0 0 0;
+        }
+
+        .crypto-balance {
+          display: flex;
+          align-items: baseline;
+          gap: 8px;
+        }
+
+        .balance-amount {
+          color: white;
+          font-size: 24px;
+          font-weight: 700;
+        }
+
+        .balance-symbol {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 14px;
+        }
+
+        .coming-soon {
+          color: #FFD700;
+          font-style: italic;
+          margin: 0;
+        }
+
+        .network-warning {
+          color: #ff9800;
+          font-size: 12px;
+          margin: 8px 0 0 0;
+        }
+
+        .loading-spinner {
+          font-size: 24px;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .btn-refresh {
+          width: 100%;
+          background: rgba(255, 167, 38, 0.2);
+          border: 1px solid #FFA726;
+          color: #FFA726;
+          padding: 12px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s;
+        }
+
+        .btn-refresh:hover:not(:disabled) {
+          background: rgba(255, 167, 38, 0.3);
+        }
+
+        .btn-refresh:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default CryptoBalances;

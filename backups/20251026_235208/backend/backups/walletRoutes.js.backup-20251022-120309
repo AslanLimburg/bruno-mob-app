@@ -1,0 +1,27 @@
+// Add to backend/routes/userRoutes.js or create new walletRoutes.js
+
+const express = require('express');
+const router = express.Router();
+const { authMiddleware } = require('../middleware/auth');
+const {
+  updateWalletAddress,
+  getWalletInfo,
+  disconnectWallet,
+} = require('../controllers/walletController');
+
+// @route   POST /api/user/wallet
+// @desc    Connect/Update wallet address
+// @access  Private
+router.post('/wallet', authMiddleware, updateWalletAddress);
+
+// @route   GET /api/user/wallet
+// @desc    Get wallet info
+// @access  Private
+router.get('/wallet', authMiddleware, getWalletInfo);
+
+// @route   DELETE /api/user/wallet
+// @desc    Disconnect wallet
+// @access  Private
+router.delete('/wallet', authMiddleware, disconnectWallet);
+
+module.exports = router;

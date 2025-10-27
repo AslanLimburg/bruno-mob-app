@@ -1,0 +1,31 @@
+/* Token Icon Component Styles */
+
+.token-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.token-icon-img {
+  transition: all 0.3s ease;
+}
+
+.token-icon-img:hover {
+  transform: scale(1.1);
+}
+
+.token-icon-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.token-icon-fallback {
+  transition: all 0.3s ease;
+}
+
+.token-icon-fallback:hover {
+  transform: scale(1.1);
+}
+

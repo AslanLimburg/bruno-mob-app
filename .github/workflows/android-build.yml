@@ -1,0 +1,82 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запускать вручную
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+    
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: ☕ Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
+    - name: 📦 Install frontend dependencies
+      working-directory: frontend
+      run: npm ci
+    
+    - name: 🏗️ Build React production
+      working-directory: frontend
+      env:
+        REACT_APP_API_URL: https://brunotoken.com/api
+      run: npm run build
+    
+    - name: 🔄 Sync Capacitor
+      working-directory: frontend
+      run: npx cap sync android
+    
+    - name: 🎨 Generate Android icons
+      working-directory: frontend
+      run: node generate-android-icons.js
+    
+    - name: 🤖 Build Android Debug APK
+      working-directory: frontend/android
+      run: ./gradlew assembleDebug
+    
+    - name: 📤 Upload Debug APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: bruno-token-debug.apk
+        path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+    
+    - name: 🤖 Build Android Release AAB
+      working-directory: frontend/android
+      run: ./gradlew bundleRelease
+    
+    - name: 📤 Upload Release AAB
+      uses: actions/upload-artifact@v3
+      with:
+        name: bruno-token-release.aab
+        path: frontend/android/app/build/outputs/bundle/release/app-release.aab
+    
+    - name: ✅ Build Summary
+      run: |
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "✅ СБОРКА ЗАВЕРШЕНА!"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        echo "📲 Debug APK для тестирования:"
+        ls -lh frontend/android/app/build/outputs/apk/debug/app-debug.apk
+        echo ""
+        echo "📦 Release AAB для публикации:"
+        ls -lh frontend/android/app/build/outputs/bundle/release/app-release.aab
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+

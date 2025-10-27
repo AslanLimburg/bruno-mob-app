@@ -1,0 +1,235 @@
+.user-info-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.user-info-modal-content {
+  background: linear-gradient(135deg, #1d2e4a 0%, #2d3e5a 100%);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.user-info-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.user-info-modal-header h2 {
+  margin: 0;
+  color: #FFA726;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.user-info-modal-close {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.user-info-modal-close:hover {
+  background: rgba(255, 167, 38, 0.1);
+  color: #FFA726;
+}
+
+.user-info-modal-body {
+  padding: 30px;
+}
+
+.user-info-avatar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.user-avatar-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFA726 0%, #FFB84D 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  color: #0A1929;
+  box-shadow: 0 4px 20px rgba(255, 167, 38, 0.3);
+}
+
+.user-info-details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.user-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(10, 25, 41, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  transition: all 0.2s;
+}
+
+.user-info-item:hover {
+  background: rgba(10, 25, 41, 0.7);
+  border-color: rgba(255, 167, 38, 0.3);
+}
+
+.user-info-label {
+  color: #94A3B8;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-info-value {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 400;
+  text-align: right;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.user-role {
+  background: rgba(255, 167, 38, 0.1);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.user-referral-code {
+  font-family: monospace;
+  background: rgba(76, 175, 80, 0.1);
+  padding: 5px 12px;
+  border-radius: 6px;
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.user-balance {
+  color: #FFA726;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-info-modal-content {
+    width: 95%;
+    margin: 10px;
+  }
+  
+  .user-info-modal-header {
+    padding: 15px 20px;
+  }
+  
+  .user-info-modal-header h2 {
+    font-size: 20px;
+  }
+  
+  .user-info-modal-body {
+    padding: 20px;
+  }
+  
+  .user-avatar-circle {
+    width: 80px;
+    height: 80px;
+    font-size: 36px;
+  }
+  
+  .user-info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .user-info-value {
+    text-align: left;
+    max-width: 100%;
+  }
+}
+
+/* Delete Account Button */
+.user-info-danger-zone {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(255, 59, 48, 0.2);
+}
+
+.btn-delete-account-modal {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.2) 0%, rgba(192, 57, 43, 0.2) 100%);
+  color: #ff3b30;
+  border: 2px solid rgba(255, 59, 48, 0.4);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-delete-account-modal:hover {
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.3) 0%, rgba(192, 57, 43, 0.3) 100%);
+  border-color: #ff3b30;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+}
+
+.btn-delete-account-modal:active {
+  transform: translateY(0);
+}
+
+

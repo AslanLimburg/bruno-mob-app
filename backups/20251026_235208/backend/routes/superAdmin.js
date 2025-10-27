@@ -1,0 +1,649 @@
+const express = require('express');
+const router = express.Router();
+const { verifySuperAdmin } = require('../middleware/superAdmin');
+const {
+    getDashboardStats,
+    getAllUsers,
+    getUserDetails,
+    blockUser,
+    blacklistUser,
+    unblockUser,
+    deleteUser
+} = require('../services/superAdminService');
+
+// Все routes требуют super-admin права
+router.use(verifySuperAdmin);
+
+// ==========================================
+// DASHBOARD
+// ==========================================
+
+// GET /api/super-admin/dashboard - Получить статистику
+router.get('/dashboard', async (req, res) => {
+    try {
+        const result = await getDashboardStats();
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ==========================================
+// USERS MANAGEMENT
+// ==========================================
+
+// GET /api/super-admin/users - Получить список пользователей
+router.get('/users', async (req, res) => {
+    try {
+        const filters = {
+            search: req.query.search,
+            status: req.query.status,
+            role: req.query.role,
+            isBlocked: req.query.isBlocked === 'true' ? true : req.query.isBlocked === 'false' ? false : undefined,
+            isBlacklisted: req.query.isBlacklisted === 'true' ? true : req.query.isBlacklisted === 'false' ? false : undefined,
+            sortBy: req.query.sortBy,
+            sortOrder: req.query.sortOrder,
+            page: req.query.page,
+            limit: req.query.limit
+        };
+        
+        const result = await getAllUsers(filters);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET /api/super-admin/users/:id - Получить детали пользователя
+router.get('/users/:id', async (req, res) => {
+    try {
+        const result = await getUserDetails(req.params.id);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST /api/super-admin/users/:id/block - Заблокировать пользователя
+router.post('/users/:id/block', async (req, res) => {
+    try {
+        const { reason } = req.body;
+        
+        if (!reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Reason is required' 
+            });
+        }
+        
+        const result = await blockUser(
+            req.user.id,
+            req.params.id,
+            reason,
+            req.ip
+        );
+        
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST /api/super-admin/users/:id/blacklist - Добавить в черный список
+router.post('/users/:id/blacklist', async (req, res) => {
+    try {
+        const { reason } = req.body;
+        
+        if (!reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Reason is required' 
+            });
+        }
+        
+        const result = await blacklistUser(
+            req.user.id,
+            req.params.id,
+            reason,
+            req.ip
+        );
+        
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST /api/super-admin/users/:id/unblock - Разблокировать пользователя
+router.post('/users/:id/unblock', async (req, res) => {
+    try {
+        const result = await unblockUser(
+            req.user.id,
+            req.params.id,
+            req.ip
+        );
+        
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// DELETE /api/super-admin/users/:id - Удалить пользователя
+router.delete('/users/:id', async (req, res) => {
+    try {
+        const result = await deleteUser(
+            req.user.id,
+            req.params.id,
+            req.ip
+        );
+        
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ==========================================
+// BALANCES
+// ==========================================
+
+// GET /api/super-admin/balances - Получить все балансы
+router.get('/balances', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        const result = await pool.query(`
+            SELECT 
+                u.id,
+                u.email,
+                ub.crypto,
+                ub.balance,
+                ub.created_at
+            FROM user_balances ub
+            JOIN users u ON ub.user_id = u.id
+            ORDER BY u.id, ub.crypto
+        `);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST /api/super-admin/balances/:userId/adjust - Изменить баланс вручную
+router.post('/balances/:userId/adjust', async (req, res) => {
+    try {
+        const { crypto, amount, reason } = req.body;
+        const pool = require('../config/database');
+        const { logAdminActivity } = require('../utils/logger');
+        
+        if (!crypto || !amount || !reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Crypto, amount and reason are required' 
+            });
+        }
+        
+        // Обновляем баланс
+        await pool.query(
+            `UPDATE user_balances 
+             SET balance = balance + $1 
+             WHERE user_id = $2 AND crypto = $3`,
+            [amount, req.params.userId, crypto]
+        );
+        
+        // Создаем транзакцию для истории
+        await pool.query(
+            `INSERT INTO transactions 
+             (to_user_id, crypto, amount, type, status, metadata)
+             VALUES ($1, $2, $3, 'admin_adjustment', 'completed', $4)`,
+            [req.params.userId, crypto, Math.abs(amount), JSON.stringify({ reason, admin_id: req.user.id })]
+        );
+        
+        // Логируем
+        await logAdminActivity(
+            req.user.id,
+            'ADJUST_BALANCE',
+            'balance',
+            req.params.userId,
+            `Adjusted ${crypto} balance by ${amount}. Reason: ${reason}`,
+            { crypto, amount, reason },
+            req.ip
+        );
+        
+        res.json({ success: true, message: 'Balance adjusted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ==========================================
+// TRANSACTIONS
+// ==========================================
+
+// GET /api/super-admin/transactions - Получить все транзакции
+router.get('/transactions', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = (page - 1) * limit;
+        
+        let query = `
+            SELECT 
+                t.*,
+                u1.email as from_email,
+                u2.email as to_email
+            FROM transactions t
+            LEFT JOIN users u1 ON t.from_user_id = u1.id
+            LEFT JOIN users u2 ON t.to_user_id = u2.id
+            WHERE 1=1
+        `;
+        
+        const params = [];
+        let paramCount = 1;
+        
+        // Фильтры
+        if (req.query.type) {
+            query += ` AND t.type = $${paramCount}`;
+            params.push(req.query.type);
+            paramCount++;
+        }
+        
+        if (req.query.status) {
+            query += ` AND t.status = $${paramCount}`;
+            params.push(req.query.status);
+            paramCount++;
+        }
+        
+        if (req.query.crypto) {
+            query += ` AND t.crypto = $${paramCount}`;
+            params.push(req.query.crypto);
+            paramCount++;
+        }
+        
+        query += ` ORDER BY t.created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+        params.push(limit, offset);
+        
+        const result = await pool.query(query, params);
+        
+        // Общее количество
+        const countResult = await pool.query('SELECT COUNT(*) FROM transactions');
+        
+        res.json({
+            success: true,
+            data: result.rows,
+            pagination: {
+                total: parseInt(countResult.rows[0].count),
+                page,
+                limit,
+                pages: Math.ceil(countResult.rows[0].count / limit)
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ==========================================
+// REFERRALS
+// ==========================================
+
+// GET /api/super-admin/referrals - Получить древо рефералов
+router.get('/referrals', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        // Получаем всех пользователей с их рефералами
+        const result = await pool.query(`
+            WITH RECURSIVE referral_tree AS (
+                -- Базовый запрос: пользователи без реферера (корневой уровень)
+                SELECT 
+                    id,
+                    email,
+                    referrer_id,
+                    created_at,
+                    1 as level,
+                    ARRAY[id] as path
+                FROM users
+                WHERE referrer_id IS NULL
+                
+                UNION ALL
+                
+                -- Рекурсивная часть: получаем рефералов
+                SELECT 
+                    u.id,
+                    u.email,
+                    u.referrer_id,
+                    u.created_at,
+                    rt.level + 1,
+                    rt.path || u.id
+                FROM users u
+                INNER JOIN referral_tree rt ON u.referrer_id = rt.id
+            )
+            SELECT * FROM referral_tree
+            ORDER BY path
+        `);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET /api/super-admin/referrals/:userId - Получить рефералов пользователя
+router.get('/referrals/:userId', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        const result = await pool.query(`
+            SELECT 
+                u.id,
+                u.email,
+                u.created_at,
+                COALESCE(ub.balance, 0) as brt_balance
+            FROM users u
+            LEFT JOIN user_balances ub ON u.id = ub.user_id AND ub.crypto = 'BRT'
+            WHERE u.referrer_id = $1
+            ORDER BY u.created_at DESC
+        `, [req.params.userId]);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ==========================================
+// LOGS
+// ==========================================
+
+// GET /api/super-admin/logs/admin - Получить логи администратора
+router.get('/logs/admin', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        const result = await pool.query(`
+            SELECT 
+                al.*,
+                u.email as admin_email
+            FROM admin_activity_logs al
+            JOIN users u ON al.admin_id = u.id
+            ORDER BY al.created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// GET /api/super-admin/logs/system - Получить системные логи
+router.get('/logs/system', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        const result = await pool.query(`
+            SELECT * FROM system_logs
+            ORDER BY created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ==========================================
+// BLACKLIST
+// ==========================================
+
+// GET /api/super-admin/blacklist - Получить черный список
+router.get('/blacklist', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        const result = await pool.query(`
+            SELECT 
+                b.*,
+                u.email as added_by_email
+            FROM blacklist b
+            LEFT JOIN users u ON b.added_by = u.id
+            ORDER BY b.added_at DESC
+        `);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST /api/super-admin/blacklist - Добавить в черный список
+router.post('/blacklist', async (req, res) => {
+    try {
+        const { type, value, reason } = req.body;
+        const pool = require('../config/database');
+        const { logAdminActivity } = require('../utils/logger');
+        
+        if (!type || !value || !reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Type, value and reason are required' 
+            });
+        }
+        
+        await pool.query(
+            `INSERT INTO blacklist (blacklist_type, value, reason, added_by)
+             VALUES ($1, $2, $3, $4)`,
+            [type, value, reason, req.user.id]
+        );
+        
+        await logAdminActivity(
+            req.user.id,
+            'ADD_TO_BLACKLIST',
+            'blacklist',
+            null,
+            `Added ${type} to blacklist: ${value}`,
+            { type, value, reason },
+            req.ip
+        );
+        
+        res.json({ success: true, message: 'Added to blacklist successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// DELETE /api/super-admin/blacklist/:id - Удалить из черного списка
+router.delete('/blacklist/:id', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        const { logAdminActivity } = require('../utils/logger');
+        
+        await pool.query('DELETE FROM blacklist WHERE id = $1', [req.params.id]);
+        
+        await logAdminActivity(
+            req.user.id,
+            'REMOVE_FROM_BLACKLIST',
+            'blacklist',
+            req.params.id,
+            'Removed from blacklist',
+            {},
+            req.ip
+        );
+        
+        res.json({ success: true, message: 'Removed from blacklist successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+// ==========================================
+// SYSTEM BALANCES MANAGEMENT
+// ==========================================
+
+// GET /api/super-admin/system-balances - Получить балансы системных аккаунтов
+router.get('/system-balances', async (req, res) => {
+    try {
+        const pool = require('../config/database');
+        
+        // ID системных аккаунтов
+        const systemAccountIds = [1, 11, 17, 18]; // admin, gasfee, treasury, brtstar
+        
+        const result = await pool.query(`
+            SELECT 
+                ub.user_id,
+                u.email,
+                ub.crypto,
+                ub.balance,
+                ub.updated_at
+            FROM user_balances ub
+            JOIN users u ON ub.user_id = u.id
+            WHERE ub.user_id = ANY($1)
+            ORDER BY ub.user_id, ub.crypto
+        `, [systemAccountIds]);
+        
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error('Get system balances error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// POST /api/super-admin/system-transfer - Перевод между системными аккаунтами
+router.post('/system-transfer', async (req, res) => {
+     const { pool } = require('../config/database');
+    const client = await pool.connect();
+    
+    try {
+        const { fromAccount, toAccount, crypto, amount, reason } = req.body;
+        const { logAdminActivity } = require('../utils/logger');
+        
+        // Валидация
+        if (!fromAccount || !toAccount || !crypto || !amount || !reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'All fields are required' 
+            });
+        }
+        
+        const systemAccountIds = [1, 11, 17, 18]; // admin, gasfee, treasury, super-admin
+        const treasuryId = 17; // treasury@brunotoken.com
+        const specialUserId = 5; // aslanlimburg@mail.ru - постоянный участник системных переводов
+        
+        const fromId = parseInt(fromAccount);
+        const toId = parseInt(toAccount);
+        const transferAmount = parseFloat(amount);
+        
+        // Разрешённые комбинации:
+        // 1. Между системными аккаунтами (1, 11, 17, 18)
+        // 2. Treasury (17) ↔ aslanlimburg (5) в обе стороны
+        const isSystemToSystem = systemAccountIds.includes(fromId) && systemAccountIds.includes(toId);
+        const isTreasuryToSpecial = (fromId === treasuryId && toId === specialUserId) || 
+                                     (fromId === specialUserId && toId === treasuryId);
+        
+        if (!isSystemToSystem && !isTreasuryToSpecial) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid transfer: only system-to-system or treasury↔aslanlimburg allowed' 
+            });
+        }
+        
+        if (fromId === toId) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Cannot transfer to the same account' 
+            });
+        }
+        
+        if (transferAmount <= 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Amount must be positive' 
+            });
+        }
+        
+        await client.query('BEGIN');
+        
+        // Проверить баланс отправителя
+        const balanceCheck = await client.query(
+            `SELECT balance FROM user_balances 
+             WHERE user_id = $1 AND crypto = $2`,
+            [fromId, crypto]
+        );
+        
+        if (balanceCheck.rows.length === 0 || parseFloat(balanceCheck.rows[0].balance) < transferAmount) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Insufficient balance' 
+            });
+        }
+        
+        // Вычесть из отправителя
+        await client.query(
+            `UPDATE user_balances 
+             SET balance = balance - $1, updated_at = NOW()
+             WHERE user_id = $2 AND crypto = $3`,
+            [transferAmount, fromId, crypto]
+        );
+        
+        // Добавить получателю
+        await client.query(
+            `UPDATE user_balances 
+             SET balance = balance + $1, updated_at = NOW()
+             WHERE user_id = $2 AND crypto = $3`,
+            [transferAmount, toId, crypto]
+        );
+        
+        // Создать транзакцию
+        await client.query(
+            `INSERT INTO transactions 
+             (from_user_id, to_user_id, crypto, amount, type, status, metadata)
+             VALUES ($1, $2, $3, $4, 'system_transfer', 'completed', $5)`,
+            [fromId, toId, crypto, transferAmount, JSON.stringify({ 
+                reason, 
+                admin_id: req.user.id,
+                admin_email: req.user.email
+            })]
+        );
+        
+        // Логировать
+        await logAdminActivity(
+            req.user.id,
+            'SYSTEM_TRANSFER',
+            'system_balance',
+            null,
+            `Transferred ${transferAmount} ${crypto} from ${fromId} to ${toId}. Reason: ${reason}`,
+            { fromAccount: fromId, toAccount: toId, crypto, amount: transferAmount, reason },
+            req.ip
+        );
+        
+        await client.query('COMMIT');
+        
+        console.log(`✅ System transfer: ${transferAmount} ${crypto} from ${fromId} to ${toId} by admin ${req.user.id}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Transfer completed successfully',
+            data: {
+                from: fromId,
+                to: toId,
+                crypto,
+                amount: transferAmount
+            }
+        });
+        
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('System transfer error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    } finally {
+        client.release();
+    }
+});
+
+module.exports = router;

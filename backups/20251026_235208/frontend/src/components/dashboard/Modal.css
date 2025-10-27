@@ -1,0 +1,389 @@
+/* Modal Overlay - затемненный фон */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+/* Modal Content - голубой фон как у CryptoBalances */
+.modal-content {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+  border-radius: 20px;
+  padding: 40px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(37, 99, 235, 0.5);
+  position: relative;
+  color: #ffffff;
+}
+
+/* Modal Title */
+.modal-content h2 {
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 32px 0;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 28px;
+}
+
+.form-group label {
+  display: block;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Inputs and Selects */
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 18px;
+  color: #1e3a8a;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  box-sizing: border-box;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #60a5fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
+}
+
+.form-group input::placeholder {
+  color: rgba(30, 58, 138, 0.5);
+  font-size: 16px;
+}
+
+/* Small text - увеличенный */
+.form-group small {
+  display: block;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Network Info Box */
+.network-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.info-box {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.info-box p {
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.info-box strong {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.info-box ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.info-box ul li {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+
+.info-box .highlight {
+  color: #fbbf24;
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+/* Address Container */
+.address-container {
+  margin: 24px 0;
+}
+
+.email-display,
+.wallet-display,
+.connect-wallet {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.email-display strong,
+.wallet-display strong {
+  display: block;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.address-box {
+  background: rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 12px 0;
+  word-break: break-all;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Warning Box */
+.warning-box {
+  background: rgba(251, 191, 36, 0.2);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 24px 0;
+}
+
+.warning-box strong {
+  color: #fbbf24;
+  font-size: 18px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.warning-box ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.warning-box ul li {
+  color: #ffffff;
+  font-size: 15px;
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+
+/* Swap Switch */
+.swap-switch {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.switch-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 12px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.switch-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Estimate Box */
+.estimate-box {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.estimate-box p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.estimate-box strong {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
+  display: block;
+  margin: 12px 0;
+}
+
+.estimate-box small {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  display: block;
+  margin-top: 8px;
+}
+
+/* Buttons */
+.copy-btn,
+.connect-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 14px 28px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 16px;
+}
+
+.copy-btn:hover,
+.connect-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal Actions - кнопки внизу */
+.modal-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  justify-content: center;
+}
+
+.modal-actions button {
+  flex: 1;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.modal-actions button[type="submit"],
+.modal-actions button:last-child:not([type="button"]) {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.modal-actions button[type="submit"]:hover,
+.modal-actions button:last-child:not([type="button"]):hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+}
+
+.modal-actions button[type="button"]:first-child {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.modal-actions button[type="button"]:first-child:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.modal-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Connect Wallet Section */
+.connect-wallet p {
+  color: #ffffff;
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 28px;
+    max-width: 95%;
+  }
+
+  .modal-content h2 {
+    font-size: 26px;
+    margin-bottom: 24px;
+  }
+
+  .form-group label {
+    font-size: 16px;
+  }
+
+  .form-group input,
+  .form-group select {
+    font-size: 16px;
+    padding: 14px 16px;
+  }
+
+  .modal-actions button {
+    font-size: 16px;
+    padding: 14px 24px;
+  }
+
+  .estimate-box strong {
+    font-size: 24px;
+  }
+}
+
+/* Scrollbar styling */
+.modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}

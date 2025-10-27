@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bruno Token</string>
+    <string name="title_activity_main">Bruno Token</string>
+    <string name="package_name">com.brunotoken.app</string>
+    <string name="custom_url_scheme">com.brunotoken.app</string>
+</resources>

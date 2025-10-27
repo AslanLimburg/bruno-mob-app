@@ -1,0 +1,15 @@
+Bruno Token App - Информация о бэкапе
+=====================================
+Дата создания: Sun Oct 26 23:53:57 +04 2025
+Описание: Added user info modal and fixed lottery GS-I access
+Автор: Cursor AI Assistant
+
+Состояние проекта:
+- Frontend: Работает
+- Backend: Работает
+- База данных: Подключена
+- Аутентификация: Работает
+
+Тестовые учетные данные:
+- Email: test@test.com
+- Password: test1234

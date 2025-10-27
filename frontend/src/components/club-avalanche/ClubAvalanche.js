@@ -33,12 +33,13 @@ const ClubAvalanche = () => {
   const loadData = async () => {
     try {
       const token = localStorage.getItem('token');
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
       
       const [programsRes, statsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/club-avalanche/my-programs', {
+        fetch(`${API_URL}/club-avalanche/my-programs`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch('http://localhost:5000/api/club-avalanche/stats', {
+        fetch(`${API_URL}/club-avalanche/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -69,7 +70,8 @@ const ClubAvalanche = () => {
   const handleJoinProgram = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/club-avalanche/join', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_URL}/club-avalanche/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

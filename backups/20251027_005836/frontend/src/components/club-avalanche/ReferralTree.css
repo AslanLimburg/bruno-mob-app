@@ -1,0 +1,275 @@
+/* Referral Tree Modal */
+.tree-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s;
+}
+
+.tree-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s;
+}
+
+.tree-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s;
+}
+
+.tree-close:hover {
+  color: #333;
+}
+
+.tree-modal h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 28px;
+  text-align: center;
+}
+
+/* Tabs */
+.tree-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tree-tab {
+  padding: 10px 24px;
+  background: #f5f5f5;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.tree-tab:hover {
+  background: #e0e0e0;
+}
+
+.tree-tab.active {
+  background: #FFA726;
+  border-color: #FFA726;
+  color: white;
+}
+
+/* Content */
+.tree-content {
+  min-height: 300px;
+}
+
+.tree-loading,
+.tree-error,
+.tree-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+.tree-error {
+  color: #f44336;
+}
+
+.tree-empty p {
+  margin: 10px 0;
+}
+
+/* Tree Visualization */
+.tree-visualization {
+  padding: 20px 0;
+}
+
+.tree-level {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  position: relative;
+}
+
+.tree-level.level-0 {
+  background: linear-gradient(135deg, #FFA726 0%, #FF9800 100%);
+}
+
+.level-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #FFA726;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.level-nodes {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tree-node {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tree-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #FFA726;
+}
+
+.root-node {
+  border-color: #FFD54F;
+  background: linear-gradient(135deg, #FFF9C4 0%, #FFECB3 100%);
+  min-width: 220px;
+  margin: 0 auto;
+}
+
+.node-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.node-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.node-name {
+  font-weight: 700;
+  color: #333;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.node-code {
+  font-size: 12px;
+  color: #FFA726;
+  font-family: 'Courier New', monospace;
+  margin-top: 4px;
+}
+
+.node-date {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.node-program {
+  font-size: 13px;
+  color: #FF6F00;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Summary */
+.tree-summary {
+  margin-top: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  font-size: 16px;
+  color: #333;
+}
+
+.summary-item strong {
+  color: #FF6F00;
+  margin-right: 8px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tree-modal {
+    width: 95%;
+    padding: 20px;
+    max-height: 90vh;
+  }
+
+  .tree-modal h2 {
+    font-size: 22px;
+  }
+
+  .tree-tab {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .level-nodes {
+    gap: 10px;
+  }
+
+  .tree-node {
+    min-width: 150px;
+    padding: 12px;
+  }
+
+  .node-icon {
+    font-size: 24px;
+  }
+
+  .tree-summary {
+    gap: 20px;
+  }
+}

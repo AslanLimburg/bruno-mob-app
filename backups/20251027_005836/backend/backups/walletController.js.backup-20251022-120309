@@ -1,0 +1,126 @@
+// Add this to your userController.js or create new walletController.js
+
+const { pool } = require('../config/database');
+
+// Update user wallet address
+const updateWalletAddress = async (req, res) => {
+  const userId = req.user.id; // from authMiddleware
+  const { walletAddress } = req.body;
+
+  if (!walletAddress || !walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid wallet address format',
+    });
+  }
+
+  try {
+    // Check if wallet is already used by another user
+    const existingWallet = await pool.query(
+      'SELECT id FROM users WHERE wallet_address = $1 AND id != $2',
+      [walletAddress.toLowerCase(), userId]
+    );
+
+    if (existingWallet.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'This wallet is already connected to another account',
+      });
+    }
+
+    // Update user's wallet address
+    const result = await pool.query(
+      `UPDATE users 
+       SET wallet_address = $1, wallet_connected = true
+       WHERE id = $2 
+       RETURNING id, email, wallet_address, wallet_connected`,
+      [walletAddress.toLowerCase(), userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Wallet connected successfully',
+      data: {
+        walletAddress: result.rows[0].wallet_address,
+        walletConnected: result.rows[0].wallet_connected,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating wallet address:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update wallet address',
+    });
+  }
+};
+
+// Get user wallet info
+const getWalletInfo = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      'SELECT wallet_address, wallet_connected FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        walletAddress: result.rows[0].wallet_address,
+        walletConnected: result.rows[0].wallet_connected,
+      },
+    });
+  } catch (error) {
+    console.error('Error getting wallet info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get wallet info',
+    });
+  }
+};
+
+// Disconnect wallet
+const disconnectWallet = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    await pool.query(
+      `UPDATE users 
+       SET wallet_address = NULL, wallet_connected = false
+       WHERE id = $1`,
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Wallet disconnected successfully',
+    });
+  } catch (error) {
+    console.error('Error disconnecting wallet:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to disconnect wallet',
+    });
+  }
+};
+
+module.exports = {
+  updateWalletAddress,
+  getWalletInfo,
+  disconnectWallet,
+};

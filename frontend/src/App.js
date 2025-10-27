@@ -15,6 +15,9 @@ import Lottery from "./components/lottery/Lottery";
 import SuperAdminPanel from "./components/super-admin/SuperAdminPanel";
 import VectorDestiny from "./components/VectorDestiny/VectorDestiny";
 import Verification from "./components/verification/Verification"; // 🆕 KYC страница
+import DeleteAccount from "./components/DeleteAccount"; // 🗑️ Delete Account page
+import InstallPWA from "./components/InstallPWA"; // 📱 PWA Install button
+import UpdateNotification from "./components/UpdateNotification"; // 🔄 PWA Update notification
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -93,6 +96,12 @@ function AppContent() {
 
   return (
     <>
+      {/* PWA Install Button */}
+      <InstallPWA />
+
+      {/* PWA Update Notification */}
+      <UpdateNotification />
+
       <div className="notifications-container">
         {notifications.map((n) => (
           <Notification
@@ -204,6 +213,16 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Verification addNotification={addNotification} />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* 🗑️ DELETE ACCOUNT PAGE */}
+        <Route
+          path="/delete-account"
+          element={
+            <ProtectedRoute>
+              <DeleteAccount addNotification={addNotification} />
             </ProtectedRoute>
           }
         />

@@ -11,6 +11,7 @@ router.post('/resend-verification', AuthController.resendVerification);
 router.post('/forgot-password', AuthController.forgotPassword);
 router.post('/reset-password', AuthController.resetPassword);
 router.get('/me', authMiddleware, AuthController.getMe);
+router.delete('/delete-account', authMiddleware, AuthController.deleteAccount);
 
 // Google OAuth Routes
 router.get('/google',

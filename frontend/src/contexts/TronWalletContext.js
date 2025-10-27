@@ -111,7 +111,8 @@ export const TronWalletProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:5000/api/user/tron-wallet', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_URL}/user/tron-wallet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

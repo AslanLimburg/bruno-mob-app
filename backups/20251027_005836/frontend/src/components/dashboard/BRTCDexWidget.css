@@ -1,0 +1,207 @@
+/* BRTC DEX Widget Styles */
+
+.dex-widget {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(147, 112, 219, 0.2) 100%);
+  border: 2px solid #9370DB;
+  border-radius: 20px;
+  padding: 25px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.dex-widget::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(147, 112, 219, 0.1) 0%, transparent 70%);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.dex-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.dex-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dex-title h3 {
+  font-size: 24px;
+  color: #E6E6FA;
+  margin: 0;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(76, 175, 80, 0.3);
+  border-radius: 20px;
+  font-size: 14px;
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  background: #4CAF50;
+  border-radius: 50%;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.coming-soon-indicator {
+  padding: 8px 16px;
+  background: rgba(255, 215, 0, 0.2);
+  border-radius: 20px;
+  font-size: 14px;
+  color: #FFD700;
+  font-weight: 600;
+}
+
+.dex-data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  position: relative;
+  z-index: 1;
+}
+
+.dex-data-item {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(147, 112, 219, 0.3);
+  transition: all 0.3s ease;
+}
+
+.dex-data-item:hover {
+  border-color: #9370DB;
+  transform: translateY(-2px);
+}
+
+.dex-data-label {
+  color: #D8BFD8;
+  font-size: 12px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dex-data-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.dex-data-change {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dex-data-change.positive {
+  color: #4CAF50;
+}
+
+.dex-data-change.negative {
+  color: #F44336;
+}
+
+.dex-data-subtitle {
+  color: #B0C4DE;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.dex-footer {
+  margin-top: 20px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.dex-link {
+  color: #9370DB;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: 1px solid #9370DB;
+  border-radius: 8px;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.dex-link:hover {
+  background: rgba(147, 112, 219, 0.2);
+  border-color: #E6E6FA;
+  color: #E6E6FA;
+}
+
+.dex-loading,
+.dex-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: #B0C4DE;
+  position: relative;
+  z-index: 1;
+}
+
+.spinner {
+  border: 3px solid rgba(147, 112, 219, 0.3);
+  border-top: 3px solid #9370DB;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .dex-data {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dex-title h3 {
+    font-size: 18px;
+  }
+  
+  .dex-widget {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dex-data {
+    grid-template-columns: 1fr;
+  }
+}
