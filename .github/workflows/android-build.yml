@@ -15,11 +15,11 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
       
-    - name: ☕ Setup Java 17
+    - name: ☕ Setup Java 21
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '21'
         
     - name: 📦 Setup Node.js
       uses: actions/setup-node@v4
