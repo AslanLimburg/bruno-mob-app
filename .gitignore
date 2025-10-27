@@ -83,3 +83,6 @@ coverage/
 *.pem
 *.key
 *.cert
+
+# Scripts with secrets
+server-fix.sh
