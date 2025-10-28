@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { connectMetaMask, openMetaMaskMobile, checkMetaMaskInstalled as checkMetaMask, isMobileDevice } from '../utils/metamaskHelper';
 
 const WalletContext = createContext();
 
@@ -18,23 +19,38 @@ export const WalletProvider = ({ children }) => {
   const [chainId, setChainId] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile on mount
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
 
   // Check if MetaMask is installed
   const isMetaMaskInstalled = () => {
-    return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
+    return checkMetaMask();
   };
 
   // Connect to MetaMask
   const connectWallet = async () => {
-    if (!isMetaMaskInstalled()) {
-      setError('MetaMask is not installed. Please install it to continue.');
-      return;
-    }
-
     setIsConnecting(true);
     setError(null);
 
     try {
+      // Try to connect using helper
+      const result = await connectMetaMask();
+      
+      if (result.redirectToMetaMask) {
+        // Mobile device - opening MetaMask app
+        setError('Please complete the connection in MetaMask app');
+        setIsConnecting(false);
+        return;
+      }
+
+      if (!result.success) {
+        throw new Error('Failed to connect MetaMask');
+      }
+
       // Request account access
       await window.ethereum.request({ method: 'eth_requestAccounts' });
 
