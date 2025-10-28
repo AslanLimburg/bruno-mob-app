@@ -362,33 +362,50 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
   .modal-content {
-    padding: 28px;
-    max-width: 95%;
+    padding: 20px;
+    max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 20px);
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
+    margin: auto;
   }
 
   .modal-content h2 {
-    font-size: 26px;
-    margin-bottom: 24px;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
   }
 
   .form-group label {
-    font-size: 16px;
+    font-size: 14px;
+    margin-bottom: 8px;
   }
 
   .form-group input,
   .form-group select {
-    font-size: 16px;
-    padding: 14px 16px;
+    font-size: 15px;
+    padding: 12px 14px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 10px;
   }
 
   .modal-actions button {
-    font-size: 16px;
-    padding: 14px 24px;
+    font-size: 15px;
+    padding: 12px 20px;
+    width: 100%;
   }
 
   .estimate-box strong {
-    font-size: 24px;
+    font-size: 20px;
   }
 }
 
